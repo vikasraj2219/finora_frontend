@@ -7,6 +7,8 @@ import AppLayout from './components/layout/AppLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/dashboard/Dashboard';
+import Accounts from './pages/accounts/Accounts';
+import Categories from './pages/categories/Categories';
 
 const App = () => (
   <ThemeModeProvider>
@@ -19,8 +21,9 @@ const App = () => (
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              {/* /accounts, /transactions, /categories, /reports, /settings
-                  are added as each phase is delivered. */}
+              <Route path="/accounts" element={<Accounts />} />
+              <Route path="/categories" element={<Categories />} />
+              {/* /transactions, /reports, /settings are added as each phase is delivered. */}
             </Route>
           </Route>
 

@@ -65,11 +65,14 @@ login screen — the first user registered automatically becomes admin.
 
 ## Build Phases (Frontend)
 
-- **Phase 1 (this delivery): Foundation** — Vite + MUI scaffold matching the loan management
+- **Phase 1: Foundation** — Vite + MUI scaffold matching the loan management
   app's structure, theme system, responsive AppLayout (Sidebar + Topbar with mobile drawer),
   AuthContext + ThemeModeContext, axios instance with auto token refresh, protected routing,
   Login/Register pages wired to the real backend, and a Dashboard placeholder with stat cards.
-- **Phase 2:** Bank & UPI Account management pages (list, add/edit dialogs, cash tracking).
+- **Phase 2 (this delivery): Accounts & Categories** — `/accounts` page with Bank Accounts / UPI
+  Accounts / Cash tabs (add, edit, activate/deactivate, delete, manual balance adjustment), and a
+  `/categories` page (Income/Expense tabs, add/edit/delete). New shared components: `PageHeader`,
+  `StatusChip`, `EmptyState`, `ConfirmDialog`. Dashboard's "Cash in Hand" stat is now wired to real data.
 - **Phase 3:** Transactions module — list/filter/search/pagination, add/edit/transfer forms.
 - **Phase 4:** Statement import UI, duplicate review, merchant mapping.
 - **Phase 5:** Full Dashboard analytics + charts, wired to real `/dashboard/*` endpoints.
@@ -92,6 +95,12 @@ login screen — the first user registered automatically becomes admin.
    hamburger icon.
 6. Log out from the avatar menu → confirm you're redirected to `/login` and `/dashboard` is
    no longer accessible without logging in again.
+7. Go to **Accounts** → add a bank account with an opening balance → confirm it shows on the
+   Dashboard's Cash in Hand card. Add a UPI account and link it to that bank account.
+8. Go to **Categories** → confirm default categories (Salary, Food & Dining, etc.) are already
+   there from registration → add, edit, and delete a custom category.
+9. On **Accounts**, open the Cash tab → adjust the cash balance with a positive and a negative
+   amount → confirm the Dashboard total updates accordingly.
 
 ## License
 MIT

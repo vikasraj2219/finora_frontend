@@ -11,7 +11,7 @@ any code with the loan management frontend.
 - MUI v5 (Material UI) — light & dark theme
 - React Hook Form (validation)
 - Axios (with automatic access-token refresh on 401)
-- Chart.js + react-chartjs-2 (dashboard/analytics charts, from Phase 5)
+- Chart.js + react-chartjs-2 (dashboard/analytics charts)
 - notistack (toast notifications)
 - Context API for auth + theme state
 
@@ -31,7 +31,7 @@ personal-finance-frontend/
 │   ├── components/
 │   │   ├── layout/       # Sidebar, Topbar, AppLayout (responsive shell)
 │   │   ├── common/       # StatCard, and other shared widgets added per phase
-│   │   └── dashboard/    # chart + panel components (Phase 5)
+│   │   └── dashboard/    # chart + panel components (trend, cash flow, breakdown, usage, highlights)
 │   ├── context/          # AuthContext, ThemeModeContext
 │   ├── hooks/            # shared hooks, added as needed
 │   ├── pages/            # one folder per route/module
@@ -82,7 +82,12 @@ login screen — the first user registered automatically becomes admin.
   rows in an editable table (category + merchant per row, likely duplicates pre-unchecked with a
   warning chip), then confirm to create the transactions. `/merchants` is a simple management page
   (merchants are usually created automatically during import, but can be added/edited manually too).
-- **Phase 5:** Full Dashboard analytics + charts, wired to real `/dashboard/*` endpoints.
+- **Phase 5 (this delivery): Dashboard & Analytics** — the Dashboard is now fully wired to the six
+  `/dashboard/*` endpoints: primary stat cards (Cash in Hand, Monthly Income/Expense/Saving), an
+  all-time totals row, an Income vs Expense bar chart, a Cash Flow line chart, a Category Breakdown
+  doughnut (toggle Expense/Income), a Payment Method pie chart, Bank-wise and UPI-wise usage bars,
+  a Yearly Summary chart with a year picker, and a Highlights card (today's spending, expense ratio,
+  most-used accounts, top category, largest expense/income).
 - **Phase 6:** Reports (export UI), Receipt management, Notifications, Settings, mobile
   bottom navigation and native-app polish pass.
 
@@ -126,6 +131,12 @@ login screen — the first user registered automatically becomes admin.
     "Possible duplicate" and pre-unchecked.
 17. Go to **Merchants** → confirm merchants created during import appear with a running
     transaction count and total, and add one manually with a default category.
+18. Back on the **Dashboard** → confirm the primary stat cards, all-time totals, Income vs
+    Expense chart, Cash Flow chart, and Payment Method chart all reflect the transactions you've
+    added so far.
+19. Toggle the Category Breakdown chart between Expense/Income → confirm it updates.
+20. Change the year on the Yearly Summary chart → confirm it re-fetches and shows that year's
+    monthly figures (zeros for years with no data yet).
 
 ## Notes
 Every transaction change writes an audit log entry on the backend (`GET /audit-logs`); there's no

@@ -1,52 +1,92 @@
+import '../../utils/chartSetup';
 import { useEffect, useState, useCallback } from 'react';
-import { Grid, Typography, Box } from '@mui/material';
+import { Grid, Typography, Box, CircularProgress } from '@mui/material';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import TrendingUpIcon from '@mui/icons-material/TrendingUpOutlined';
 import TrendingDownIcon from '@mui/icons-material/TrendingDownOutlined';
 import SavingsIcon from '@mui/icons-material/SavingsOutlined';
+
 import StatCard from '../../components/common/StatCard';
+import IncomeExpenseTrendChart from '../../components/dashboard/IncomeExpenseTrendChart';
+import CashFlowChart from '../../components/dashboard/CashFlowChart';
+import CategoryBreakdownChart from '../../components/dashboard/CategoryBreakdownChart';
+import PaymentMethodChart from '../../components/dashboard/PaymentMethodChart';
+import AccountUsageCard from '../../components/dashboard/AccountUsageCard';
+import YearlySummaryChart from '../../components/dashboard/YearlySummaryChart';
+import HighlightsCard from '../../components/dashboard/HighlightsCard';
+
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency } from '../../utils/formatters';
-import { listBankAccounts } from '../../api/bankAccountApi';
-import { getCashBalance } from '../../api/cashApi';
-import { listTransactions } from '../../api/transactionApi';
+import {
+  getDashboardSummary,
+  getDashboardTrends,
+  getCategoryBreakdown,
+  getPaymentMethodDistribution,
+  getAccountUsage,
+  getYearlySummary,
+} from '../../api/dashboardApi';
 
-const startOfMonthISO = () => {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-};
+const currentYear = new Date().getFullYear();
+const YEAR_OPTIONS = [currentYear, currentYear - 1, currentYear - 2];
 
-// Full chart-based analytics (trends, category/merchant breakdowns, bank/UPI usage)
-// arrive in Phase 5 with dedicated /dashboard/* aggregation endpoints. For now these
-// four stats are computed client-side from real Phase 2/3 data.
+// Everything on this page is now backed by the real /dashboard/* aggregation endpoints.
 const Dashboard = () => {
   const { user } = useAuth();
-  const [cashInHand, setCashInHand] = useState(null);
-  const [monthlyIncome, setMonthlyIncome] = useState(null);
-  const [monthlyExpense, setMonthlyExpense] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState(null);
+  const [trends, setTrends] = useState([]);
+  const [categoryType, setCategoryType] = useState('expense');
+  const [breakdown, setBreakdown] = useState([]);
+  const [paymentDist, setPaymentDist] = useState([]);
+  const [usage, setUsage] = useState({ banks: [], upi: [] });
+  const [year, setYear] = useState(currentYear);
+  const [yearlyData, setYearlyData] = useState({ year: currentYear, months: [] });
 
-  const load = useCallback(async () => {
-    const [bankRes, cashRes, incomeRes, expenseRes] = await Promise.all([
-      listBankAccounts(),
-      getCashBalance(),
-      listTransactions({ type: 'income', dateFrom: startOfMonthISO(), limit: 100 }),
-      listTransactions({ type: 'expense', dateFrom: startOfMonthISO(), limit: 100 }),
+  const loadCore = useCallback(async () => {
+    const [summaryRes, trendsRes, distRes, usageRes] = await Promise.all([
+      getDashboardSummary(),
+      getDashboardTrends(6),
+      getPaymentMethodDistribution(),
+      getAccountUsage(),
     ]);
-    const bankTotal = bankRes.data.data.items.reduce((sum, b) => sum + b.currentBalance, 0);
-    setCashInHand(bankTotal + cashRes.data.data.currentBalance);
-    setMonthlyIncome(incomeRes.data.data.items.reduce((sum, t) => sum + t.amount, 0));
-    setMonthlyExpense(expenseRes.data.data.items.reduce((sum, t) => sum + t.amount, 0));
+    setSummary(summaryRes.data.data);
+    setTrends(trendsRes.data.data);
+    setPaymentDist(distRes.data.data);
+    setUsage(usageRes.data.data);
+  }, []);
+
+  const loadBreakdown = useCallback(async () => {
+    const { data } = await getCategoryBreakdown({ type: categoryType });
+    setBreakdown(data.data);
+  }, [categoryType]);
+
+  const loadYearly = useCallback(async () => {
+    const { data } = await getYearlySummary(year);
+    setYearlyData(data.data);
+  }, [year]);
+
+  useEffect(() => {
+    loadCore()
+      .catch(() => {})
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    load().catch(() => {
-      setCashInHand(0);
-      setMonthlyIncome(0);
-      setMonthlyExpense(0);
-    });
-  }, [load]);
+    loadBreakdown().catch(() => {});
+  }, [loadBreakdown]);
 
-  const saving = monthlyIncome !== null && monthlyExpense !== null ? monthlyIncome - monthlyExpense : null;
+  useEffect(() => {
+    loadYearly().catch(() => {});
+  }, [loadYearly]);
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" py={8}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -57,12 +97,12 @@ const Dashboard = () => {
         Here's a snapshot of your finances
       </Typography>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={2} mb={1}>
         <Grid item xs={12} sm={6} lg={3}>
           <StatCard
             icon={AccountBalanceWalletIcon}
             label="Cash in Hand"
-            value={cashInHand === null ? '—' : formatCurrency(cashInHand)}
+            value={formatCurrency(summary.cashInHand)}
             subtext="Bank balances + cash ledger"
             color="#146C43"
           />
@@ -71,7 +111,7 @@ const Dashboard = () => {
           <StatCard
             icon={TrendingUpIcon}
             label="Monthly Income"
-            value={monthlyIncome === null ? '—' : formatCurrency(monthlyIncome)}
+            value={formatCurrency(summary.monthlyIncome)}
             color="#22C55E"
           />
         </Grid>
@@ -79,7 +119,7 @@ const Dashboard = () => {
           <StatCard
             icon={TrendingDownIcon}
             label="Monthly Expense"
-            value={monthlyExpense === null ? '—' : formatCurrency(monthlyExpense)}
+            value={formatCurrency(summary.monthlyExpense)}
             color="#EF4444"
           />
         </Grid>
@@ -87,17 +127,53 @@ const Dashboard = () => {
           <StatCard
             icon={SavingsIcon}
             label="Monthly Saving"
-            value={saving === null ? '—' : formatCurrency(saving)}
+            value={formatCurrency(summary.monthlySaving)}
             color="#C9A227"
           />
         </Grid>
       </Grid>
 
-      <Box mt={4}>
-        <Typography variant="body2" color="text.secondary">
-          Trend charts, category breakdowns, and bank/UPI usage analytics arrive in Phase 5.
-        </Typography>
-      </Box>
+      <Grid container spacing={2} mb={1}>
+        <Grid item xs={12} sm={4}>
+          <StatCard label="Total Income (all-time)" value={formatCurrency(summary.totalIncome)} color="#22C55E" />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <StatCard label="Total Expense (all-time)" value={formatCurrency(summary.totalExpense)} color="#EF4444" />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <StatCard label="Net Savings (all-time)" value={formatCurrency(summary.netSavings)} color="#3B82F6" />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} mt={0.5}>
+        <Grid item xs={12} lg={8}>
+          <IncomeExpenseTrendChart trends={trends} />
+        </Grid>
+        <Grid item xs={12} lg={4}>
+          <HighlightsCard summary={summary} />
+        </Grid>
+
+        <Grid item xs={12} lg={6}>
+          <CashFlowChart trends={trends} />
+        </Grid>
+        <Grid item xs={12} lg={6}>
+          <CategoryBreakdownChart breakdown={breakdown} type={categoryType} onTypeChange={setCategoryType} />
+        </Grid>
+
+        <Grid item xs={12} lg={6}>
+          <PaymentMethodChart distribution={paymentDist} />
+        </Grid>
+        <Grid item xs={12} lg={3}>
+          <AccountUsageCard title="Bank-wise Usage" items={usage.banks} />
+        </Grid>
+        <Grid item xs={12} lg={3}>
+          <AccountUsageCard title="UPI-wise Usage" items={usage.upi} />
+        </Grid>
+
+        <Grid item xs={12}>
+          <YearlySummaryChart data={yearlyData} year={year} onYearChange={setYear} years={YEAR_OPTIONS} />
+        </Grid>
+      </Grid>
     </Box>
   );
 };

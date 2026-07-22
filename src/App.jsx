@@ -9,6 +9,7 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/dashboard/Dashboard';
 import Accounts from './pages/accounts/Accounts';
 import Categories from './pages/categories/Categories';
+import Transactions from './pages/transactions/Transactions';
 
 const App = () => (
   <ThemeModeProvider>
@@ -23,7 +24,8 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/categories" element={<Categories />} />
-              {/* /transactions, /reports, /settings are added as each phase is delivered. */}
+              <Route path="/transactions" element={<Transactions />} />
+              {/* /reports, /settings are added as each phase is delivered. */}
             </Route>
           </Route>
 

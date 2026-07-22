@@ -69,11 +69,14 @@ login screen — the first user registered automatically becomes admin.
   app's structure, theme system, responsive AppLayout (Sidebar + Topbar with mobile drawer),
   AuthContext + ThemeModeContext, axios instance with auto token refresh, protected routing,
   Login/Register pages wired to the real backend, and a Dashboard placeholder with stat cards.
-- **Phase 2 (this delivery): Accounts & Categories** — `/accounts` page with Bank Accounts / UPI
+- **Phase 2: Accounts & Categories** — `/accounts` page with Bank Accounts / UPI
   Accounts / Cash tabs (add, edit, activate/deactivate, delete, manual balance adjustment), and a
   `/categories` page (Income/Expense tabs, add/edit/delete). New shared components: `PageHeader`,
   `StatusChip`, `EmptyState`, `ConfirmDialog`. Dashboard's "Cash in Hand" stat is now wired to real data.
-- **Phase 3:** Transactions module — list/filter/search/pagination, add/edit/transfer forms.
+- **Phase 3 (this delivery): Transactions** — `/transactions` page with a single form that adapts to
+  income, expense, or transfer; filters (type, category, date range, search); a responsive table on
+  desktop that becomes stacked cards on mobile (no horizontal scrolling); pagination. Dashboard's
+  Monthly Income / Monthly Expense / Monthly Saving stats are now wired to real data too.
 - **Phase 4:** Statement import UI, duplicate review, merchant mapping.
 - **Phase 5:** Full Dashboard analytics + charts, wired to real `/dashboard/*` endpoints.
 - **Phase 6:** Reports (export UI), Receipt management, Notifications, Settings, mobile
@@ -101,6 +104,20 @@ login screen — the first user registered automatically becomes admin.
    there from registration → add, edit, and delete a custom category.
 9. On **Accounts**, open the Cash tab → adjust the cash balance with a positive and a negative
    amount → confirm the Dashboard total updates accordingly.
+10. Go to **Transactions** → add an expense against a bank account → confirm the bank account's
+    balance on the Accounts page drops by that amount, and Dashboard's Monthly Expense updates.
+11. Add a transfer from that bank account to Cash → confirm the bank balance drops and the cash
+    balance rises by the same amount.
+12. Edit a transaction's amount → confirm the related balance adjusts to the new amount (not
+    double-counted). Delete a transaction → confirm its effect on the balance is reversed.
+13. Resize the browser below ~900px on the Transactions page → confirm the table becomes stacked
+    cards instead of a horizontally-scrolling table.
+
+## Notes on Phase 3
+Merchant selection isn't in the transaction form yet — merchant mapping and auto-categorization
+land in Phase 4 alongside statement imports. Every transaction change writes an audit log entry
+on the backend (`GET /audit-logs`); there's no dedicated audit log screen yet since that's more
+useful once Settings (Phase 6) exists to house it.
 
 ## License
 MIT

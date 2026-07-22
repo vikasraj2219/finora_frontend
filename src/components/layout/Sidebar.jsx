@@ -13,6 +13,8 @@ import DashboardIcon from '@mui/icons-material/DashboardOutlined';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalanceOutlined';
 import SwapHorizIcon from '@mui/icons-material/SwapHorizOutlined';
 import CategoryIcon from '@mui/icons-material/CategoryOutlined';
+import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
+import StorefrontIcon from '@mui/icons-material/StorefrontOutlined';
 import AssessmentIcon from '@mui/icons-material/AssessmentOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 
@@ -23,6 +25,8 @@ const navItems = [
   { label: 'Accounts', icon: AccountBalanceIcon, path: '/accounts' },
   { label: 'Transactions', icon: SwapHorizIcon, path: '/transactions' },
   { label: 'Categories', icon: CategoryIcon, path: '/categories' },
+  { label: 'Import Statement', icon: UploadFileIcon, path: '/imports' },
+  { label: 'Merchants', icon: StorefrontIcon, path: '/merchants' },
   { label: 'Reports', icon: AssessmentIcon, path: '/reports' },
   { label: 'Settings', icon: SettingsIcon, path: '/settings' },
 ];

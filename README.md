@@ -77,7 +77,11 @@ login screen — the first user registered automatically becomes admin.
   income, expense, or transfer; filters (type, category, date range, search); a responsive table on
   desktop that becomes stacked cards on mobile (no horizontal scrolling); pagination. Dashboard's
   Monthly Income / Monthly Expense / Monthly Saving stats are now wired to real data too.
-- **Phase 4:** Statement import UI, duplicate review, merchant mapping.
+- **Phase 4 (this delivery): Imports & Merchants** — `/imports` is a 3-step wizard (upload →
+  review/categorize → done): pick a bank account and a CSV/XLSX/PDF statement, review the parsed
+  rows in an editable table (category + merchant per row, likely duplicates pre-unchecked with a
+  warning chip), then confirm to create the transactions. `/merchants` is a simple management page
+  (merchants are usually created automatically during import, but can be added/edited manually too).
 - **Phase 5:** Full Dashboard analytics + charts, wired to real `/dashboard/*` endpoints.
 - **Phase 6:** Reports (export UI), Receipt management, Notifications, Settings, mobile
   bottom navigation and native-app polish pass.
@@ -112,12 +116,20 @@ login screen — the first user registered automatically becomes admin.
     double-counted). Delete a transaction → confirm its effect on the balance is reversed.
 13. Resize the browser below ~900px on the Transactions page → confirm the table becomes stacked
     cards instead of a horizontally-scrolling table.
+14. Go to **Import Statement** → pick a bank account → upload a CSV with columns like
+    `Date, Description, Debit, Credit` → confirm the review table shows parsed rows with a
+    type badge and amount.
+15. On the review screen, assign a category to a few rows, leave one unchecked, then click
+    **Import** → confirm the summary shows the right created/skipped counts and the transactions
+    now appear on the Transactions page.
+16. Import the same file again → confirm the previously-imported rows are now flagged as
+    "Possible duplicate" and pre-unchecked.
+17. Go to **Merchants** → confirm merchants created during import appear with a running
+    transaction count and total, and add one manually with a default category.
 
-## Notes on Phase 3
-Merchant selection isn't in the transaction form yet — merchant mapping and auto-categorization
-land in Phase 4 alongside statement imports. Every transaction change writes an audit log entry
-on the backend (`GET /audit-logs`); there's no dedicated audit log screen yet since that's more
-useful once Settings (Phase 6) exists to house it.
+## Notes
+Every transaction change writes an audit log entry on the backend (`GET /audit-logs`); there's no
+dedicated audit log screen yet since that's more useful once Settings (Phase 6) exists to house it.
 
 ## License
 MIT

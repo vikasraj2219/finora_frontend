@@ -184,6 +184,30 @@ const StatementImport = () => {
             unchecked by default — review before including them.
           </Typography>
 
+          <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+            <TextField
+              select
+              size="small"
+              label="Set category for all selected"
+              value=""
+              sx={{ minWidth: 220 }}
+              onChange={(e) => {
+                const value = e.target.value;
+                setRows((prev) => prev.map((r) => (r.include ? { ...r, category: value } : r)));
+              }}
+            >
+              {categories.map((c) => (
+                <MenuItem key={c._id} value={c._id}>
+                  {c.name} ({c.type})
+                </MenuItem>
+              ))}
+            </TextField>
+            <Typography variant="caption" color="text.secondary">
+              Rows left uncategorized are still imported, filed under "Other" / "Other Income" —
+              you can recategorize them later from Transactions.
+            </Typography>
+          </Stack>
+
           <ImportReviewTable rows={rows} categories={categories} onRowChange={updateRow} />
 
           <Stack direction="row" spacing={2} mt={3}>
@@ -204,7 +228,8 @@ const StatementImport = () => {
             </Typography>
             <Typography color="text.secondary" mb={3}>
               {summary.created} transaction{summary.created === 1 ? '' : 's'} added
-              {summary.skipped > 0 ? `, ${summary.skipped} skipped` : ''}.
+              {summary.uncategorized > 0 ? ` (${summary.uncategorized} filed under "Other" — recategorize anytime)` : ''}
+              {summary.skipped > 0 ? `, ${summary.skipped} unchecked row${summary.skipped === 1 ? '' : 's'} not imported` : ''}.
             </Typography>
             <Button variant="contained" onClick={startOver}>
               Import Another Statement

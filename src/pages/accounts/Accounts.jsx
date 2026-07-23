@@ -63,18 +63,33 @@ const Accounts = () => {
   const [menuTarget, setMenuTarget] = useState(null); // { type, item }
 
   const loadAll = useCallback(async () => {
-    const [bankRes, upiRes, cashRes] = await Promise.all([
+    const [bankRes, upiRes, cashRes] = await Promise.allSettled([
       listBankAccounts(),
       listUpiAccounts(),
       getCashBalance(),
     ]);
-    setBankAccounts(bankRes.data.data.items);
-    setUpiAccounts(upiRes.data.data.items);
-    setCash(cashRes.data.data);
-  }, []);
+
+    if (bankRes.status === 'fulfilled') {
+      setBankAccounts(bankRes.value.data.data.items);
+    } else {
+      enqueueSnackbar('Failed to load bank accounts', { variant: 'error' });
+    }
+
+    if (upiRes.status === 'fulfilled') {
+      setUpiAccounts(upiRes.value.data.data.items);
+    } else {
+      enqueueSnackbar('Failed to load UPI accounts', { variant: 'error' });
+    }
+
+    if (cashRes.status === 'fulfilled') {
+      setCash(cashRes.value.data.data);
+    } else {
+      enqueueSnackbar('Failed to load cash in hand', { variant: 'error' });
+    }
+  }, [enqueueSnackbar]);
 
   useEffect(() => {
-    loadAll().catch(() => enqueueSnackbar('Failed to load accounts', { variant: 'error' }));
+    loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

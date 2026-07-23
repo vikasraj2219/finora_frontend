@@ -5,6 +5,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4Outlined';
 import Brightness7Icon from '@mui/icons-material/Brightness7Outlined';
 import { useThemeMode } from '../../context/ThemeModeContext';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 const Topbar = ({ onMenuClick }) => {
   const { mode, toggleMode } = useThemeMode();
@@ -26,7 +27,8 @@ const Topbar = ({ onMenuClick }) => {
         <IconButton onClick={toggleMode} sx={{ mr: 1 }}>
           {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
         </IconButton>
-        <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+        <NotificationBell />
+        <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 1 }}>
           <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main' }}>
             {user?.name?.[0]?.toUpperCase() || 'U'}
           </Avatar>

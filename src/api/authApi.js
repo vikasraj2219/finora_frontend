@@ -6,3 +6,4 @@ export const meRequest = () => axiosInstance.get('/auth/me');
 export const logoutRequest = () => axiosInstance.post('/auth/logout');
 export const updatePasswordRequest = (payload) =>
   axiosInstance.patch('/auth/update-password', payload);
+export const updateProfileRequest = (payload) => axiosInstance.patch('/auth/profile', payload);

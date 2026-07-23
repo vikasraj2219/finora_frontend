@@ -12,6 +12,8 @@ import Categories from './pages/categories/Categories';
 import Transactions from './pages/transactions/Transactions';
 import Merchants from './pages/merchants/Merchants';
 import StatementImport from './pages/imports/StatementImport';
+import Reports from './pages/reports/Reports';
+import Settings from './pages/settings/Settings';
 
 const App = () => (
   <ThemeModeProvider>
@@ -29,7 +31,8 @@ const App = () => (
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/merchants" element={<Merchants />} />
               <Route path="/imports" element={<StatementImport />} />
-              {/* /reports, /settings are added as each phase is delivered. */}
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
 

@@ -21,6 +21,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import SwapHorizIcon from '@mui/icons-material/SwapHorizOutlined';
+import AttachFileIcon from '@mui/icons-material/AttachFileOutlined';
 import { useSnackbar } from 'notistack';
 
 import PageHeader from '../../components/common/PageHeader';
@@ -28,6 +29,7 @@ import EmptyState from '../../components/common/EmptyState';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import TransactionFormDialog from '../../components/transactions/TransactionFormDialog';
 import TransactionFilters from '../../components/transactions/TransactionFilters';
+import ReceiptDialog from '../../components/transactions/ReceiptDialog';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 import {
@@ -64,6 +66,7 @@ const Transactions = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [receiptTarget, setReceiptTarget] = useState(null);
 
   const loadLookups = useCallback(async () => {
     const [catRes, bankRes, upiRes] = await Promise.all([
@@ -118,6 +121,11 @@ const Transactions = () => {
     } catch (err) {
       enqueueSnackbar(err.response?.data?.message || 'Delete failed', { variant: 'error' });
     }
+  };
+
+  const handleReceiptUpdated = (updatedTxn) => {
+    setRows((prev) => prev.map((r) => (r._id === updatedTxn._id ? { ...r, receiptUrl: updatedTxn.receiptUrl } : r)));
+    setReceiptTarget((prev) => (prev ? { ...prev, receiptUrl: updatedTxn.receiptUrl } : prev));
   };
 
   return (
@@ -192,6 +200,12 @@ const Transactions = () => {
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
+                      <IconButton size="small" onClick={() => setReceiptTarget(t)}>
+                        <AttachFileIcon
+                          fontSize="small"
+                          color={t.receiptUrl ? 'primary' : 'inherit'}
+                        />
+                      </IconButton>
                       <IconButton
                         size="small"
                         onClick={() => {
@@ -237,6 +251,9 @@ const Transactions = () => {
                     </Typography>
                   )}
                   <Stack direction="row" justifyContent="flex-end" mt={1}>
+                    <IconButton size="small" onClick={() => setReceiptTarget(t)}>
+                      <AttachFileIcon fontSize="small" color={t.receiptUrl ? 'primary' : 'inherit'} />
+                    </IconButton>
                     <IconButton
                       size="small"
                       onClick={() => {
@@ -289,6 +306,13 @@ const Transactions = () => {
         confirmLabel="Delete"
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+      />
+
+      <ReceiptDialog
+        open={Boolean(receiptTarget)}
+        transaction={receiptTarget}
+        onClose={() => setReceiptTarget(null)}
+        onUpdated={handleReceiptUpdated}
       />
     </Box>
   );

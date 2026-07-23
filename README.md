@@ -82,29 +82,38 @@ login screen — the first user registered automatically becomes admin.
   rows in an editable table (category + merchant per row, likely duplicates pre-unchecked with a
   warning chip), then confirm to create the transactions. `/merchants` is a simple management page
   (merchants are usually created automatically during import, but can be added/edited manually too).
-- **Phase 5 (this delivery): Dashboard & Analytics** — the Dashboard is now fully wired to the six
+- **Phase 5: Dashboard & Analytics** — the Dashboard is fully wired to the six
   `/dashboard/*` endpoints: primary stat cards (Cash in Hand, Monthly Income/Expense/Saving), an
   all-time totals row, an Income vs Expense bar chart, a Cash Flow line chart, a Category Breakdown
   doughnut (toggle Expense/Income), a Payment Method pie chart, Bank-wise and UPI-wise usage bars,
   a Yearly Summary chart with a year picker, and a Highlights card (today's spending, expense ratio,
   most-used accounts, top category, largest expense/income).
-- **Phase 6:** Reports (export UI), Receipt management, Notifications, Settings, mobile
-  bottom navigation and native-app polish pass.
+- **Phase 6 (this delivery, final): Reports, Receipts, Notifications, Settings** — a `/reports` page
+  to export transactions as CSV/Excel/PDF (with date/type filters) or download a one-page financial
+  summary PDF; a receipt icon on every transaction row that opens a small upload/view/remove dialog;
+  a notification bell in the top bar with unread badge, mark-as-read, and mark-all-read; a `/settings`
+  page with Profile (name/currency), Security (password change), and an Activity Log tab (the audit
+  trail deferred from earlier phases); and a mobile bottom navigation bar for the five most-used
+  destinations, layered on top of the existing responsive sidebar/drawer.
+
+All six phases from the original brief are now delivered.
 
 ## Responsive Behavior
 - Sidebar becomes a temporary drawer (hamburger menu) below the `md` breakpoint
+- A fixed bottom navigation bar (Dashboard, Transactions, Accounts, Import, Settings) appears
+  below the `md` breakpoint for one-tap access to the most common destinations
 - Stat cards reflow from 4-across → 2-across → 1-across using MUI's Grid breakpoints
 - Built mobile-first per the design brief; tables/charts get dedicated mobile treatment
   starting Phase 3 once there's real tabular data to display
 
-## Testing Instructions (Phase 1)
+## Testing Instructions
 1. Start the backend (`npm run dev` in `personal-finance-backend`), then this frontend (`npm run dev`).
 2. Visit `http://localhost:5174/register`, create the first (admin) account — you're redirected
    straight into the Dashboard.
 3. Refresh the page → confirm you stay logged in (session restored via `/auth/me`).
 4. Toggle the theme (moon/sun icon in the top bar) → confirm light/dark persists after a refresh.
 5. Resize the browser below ~900px → confirm the sidebar collapses into a drawer opened by the
-   hamburger icon.
+   hamburger icon, and a bottom navigation bar appears.
 6. Log out from the avatar menu → confirm you're redirected to `/login` and `/dashboard` is
    no longer accessible without logging in again.
 7. Go to **Accounts** → add a bank account with an opening balance → confirm it shows on the
@@ -137,10 +146,20 @@ login screen — the first user registered automatically becomes admin.
 19. Toggle the Category Breakdown chart between Expense/Income → confirm it updates.
 20. Change the year on the Yearly Summary chart → confirm it re-fetches and shows that year's
     monthly figures (zeros for years with no data yet).
+21. On **Transactions**, click the paperclip icon on any row → upload a receipt image → confirm
+    the icon turns solid/colored, then reopen it and confirm you can view or remove the receipt.
+22. Add an expense of 10,000 or more → confirm a bell-icon badge appears in the top bar with a
+    "Large expense recorded" notification; click it to mark as read.
+23. Go to **Reports** → export transactions as CSV, then Excel, then PDF → confirm each downloads
+    and opens correctly. Download the Financial Summary PDF too.
+24. Go to **Settings** → update your name/currency on the Profile tab, change your password on
+    the Security tab, and confirm the Activity Log tab lists your recent create/update/delete
+    actions.
 
 ## Notes
-Every transaction change writes an audit log entry on the backend (`GET /audit-logs`); there's no
-dedicated audit log screen yet since that's more useful once Settings (Phase 6) exists to house it.
+Merchant selection isn't in the manual transaction form — merchants are matched automatically
+during statement import, or can be added directly on the Merchants page. Notification triggers
+are currently rule-based (large expense, overdrawn account) rather than user-configurable.
 
 ## License
 MIT

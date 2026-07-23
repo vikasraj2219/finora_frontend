@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import Sidebar, { DRAWER_WIDTH } from './Sidebar';
 import Topbar from './Topbar';
+import MobileBottomNav from './MobileBottomNav';
 
 const AppLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -18,10 +19,11 @@ const AppLayout = () => {
         flexDirection="column"
       >
         <Topbar onMenuClick={() => setMobileOpen(true)} />
-        <Box p={{ xs: 2, md: 3 }} flexGrow={1}>
+        <Box p={{ xs: 2, md: 3 }} pb={{ xs: 9, md: 3 }} flexGrow={1}>
           <Outlet />
         </Box>
       </Box>
+      <MobileBottomNav />
     </Box>
   );
 };

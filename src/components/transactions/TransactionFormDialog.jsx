@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Dialog,
@@ -12,9 +12,18 @@ import {
   Box,
   ToggleButtonGroup,
   ToggleButton,
+  Chip,
+  Typography,
 } from '@mui/material';
+import { listSubcategories } from '../../api/subcategoryApi';
 
 const PAYMENT_METHODS = ['cash', 'bank', 'upi', 'card', 'other'];
+
+const ALLOCATION_LABEL = {
+  UNALLOCATED: { label: '🔴 Unallocated', color: 'error' },
+  PARTIALLY_ALLOCATED: { label: '🟡 Partially Allocated', color: 'warning' },
+  FULLY_ALLOCATED: { label: '🟢 Fully Allocated', color: 'success' },
+};
 
 const emptyDefaults = {
   type: 'expense',
@@ -22,6 +31,8 @@ const emptyDefaults = {
   date: new Date().toISOString().slice(0, 10),
   paymentMethod: 'bank',
   category: '',
+  subcategory: '',
+  direction: 'decrease',
   bankAccount: '',
   upiAccount: '',
   note: '',
@@ -39,6 +50,8 @@ const toFormValues = (txn) => {
     date: new Date(txn.date).toISOString().slice(0, 10),
     paymentMethod: txn.paymentMethod || 'bank',
     category: txn.category?._id || '',
+    subcategory: txn.subcategory?._id || '',
+    direction: txn.direction || 'decrease',
     bankAccount: txn.bankAccount?._id || '',
     upiAccount: txn.upiAccount?._id || '',
     note: txn.note || '',
@@ -49,7 +62,10 @@ const toFormValues = (txn) => {
   };
 };
 
-// One form covers income, expense, and transfer — fields conditionally shown based on `type`.
+// Covers income, expense, transfer, adjustment, and opening balance — fields
+// conditionally shown based on `type`. Category/subcategory are optional: leaving them
+// blank is valid (the transaction lands Unallocated/Partially Allocated and can be
+// classified later from the allocation views).
 const TransactionFormDialog = ({
   open,
   onClose,
@@ -66,18 +82,40 @@ const TransactionFormDialog = ({
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: emptyDefaults });
 
   const type = watch('type');
   const paymentMethod = watch('paymentMethod');
+  const category = watch('category');
   const fromType = watch('fromType');
   const toType = watch('toType');
+
+  const [subcategories, setSubcategories] = useState([]);
 
   useEffect(() => {
     if (open) reset(toFormValues(initialValues));
   }, [open, initialValues, reset]);
 
+  const loadSubcategories = useCallback(async (categoryId) => {
+    if (!categoryId) {
+      setSubcategories([]);
+      return;
+    }
+    const { data } = await listSubcategories({ category: categoryId });
+    setSubcategories(data.data);
+  }, []);
+
+  useEffect(() => {
+    loadSubcategories(category);
+    if (!isEdit || category !== initialValues?.category?._id) {
+      setValue('subcategory', '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
+
+  const classifiable = !['transfer', 'adjustment', 'opening_balance'].includes(type);
   const filteredCategories = categories.filter((c) => c.type === (type === 'income' ? 'income' : 'expense'));
 
   const submitHandler = async (values) => {
@@ -98,10 +136,18 @@ const TransactionFormDialog = ({
         bankAccount: values.toType === 'bank' ? values.toBankAccount : undefined,
       };
     } else {
-      payload.category = values.category;
       payload.paymentMethod = values.paymentMethod;
       if (values.paymentMethod === 'bank' && values.bankAccount) payload.bankAccount = values.bankAccount;
       if (values.paymentMethod === 'upi' && values.upiAccount) payload.upiAccount = values.upiAccount;
+
+      if (values.type === 'adjustment') {
+        payload.direction = values.direction;
+      }
+
+      if (classifiable) {
+        if (values.category) payload.category = values.category;
+        if (values.subcategory) payload.subcategory = values.subcategory;
+      }
     }
 
     await onSubmit(payload);
@@ -109,7 +155,17 @@ const TransactionFormDialog = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{isEdit ? 'Edit Transaction' : 'Add Transaction'}</DialogTitle>
+      <DialogTitle>
+        {isEdit ? 'Edit Transaction' : 'Add Transaction'}
+        {isEdit && initialValues?.allocationStatus && (
+          <Chip
+            size="small"
+            sx={{ ml: 1.5 }}
+            label={ALLOCATION_LABEL[initialValues.allocationStatus]?.label}
+            color={ALLOCATION_LABEL[initialValues.allocationStatus]?.color}
+          />
+        )}
+      </DialogTitle>
       <Box component="form" onSubmit={handleSubmit(submitHandler)}>
         <DialogContent>
           <Stack spacing={2.5} mt={0.5}>
@@ -117,10 +173,18 @@ const TransactionFormDialog = ({
               name="type"
               control={control}
               render={({ field }) => (
-                <ToggleButtonGroup {...field} exclusive fullWidth onChange={(e, v) => v && field.onChange(v)}>
+                <ToggleButtonGroup
+                  {...field}
+                  exclusive
+                  fullWidth
+                  onChange={(e, v) => v && field.onChange(v)}
+                  sx={{ flexWrap: 'wrap' }}
+                >
                   <ToggleButton value="expense">Expense</ToggleButton>
                   <ToggleButton value="income">Income</ToggleButton>
                   <ToggleButton value="transfer">Transfer</ToggleButton>
+                  <ToggleButton value="adjustment">Adjustment</ToggleButton>
+                  <ToggleButton value="opening_balance">Opening Balance</ToggleButton>
                 </ToggleButtonGroup>
               )}
             />
@@ -143,29 +207,65 @@ const TransactionFormDialog = ({
               />
             </Stack>
 
+            {type === 'adjustment' && (
+              <Controller
+                name="direction"
+                control={control}
+                render={({ field }) => (
+                  <TextField {...field} select label="Direction" fullWidth>
+                    <MenuItem value="increase">Increase balance</MenuItem>
+                    <MenuItem value="decrease">Decrease balance</MenuItem>
+                  </TextField>
+                )}
+              />
+            )}
+
             {type !== 'transfer' ? (
               <>
-                <Controller
-                  name="category"
-                  control={control}
-                  rules={{ required: 'Category is required' }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      label="Category"
-                      error={!!errors.category}
-                      helperText={errors.category?.message}
-                      fullWidth
-                    >
-                      {filteredCategories.map((c) => (
-                        <MenuItem key={c._id} value={c._id}>
-                          {c.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
+                {classifiable && (
+                  <>
+                    <Controller
+                      name="category"
+                      control={control}
+                      render={({ field }) => (
+                        <TextField {...field} select label="Category (optional)" fullWidth>
+                          <MenuItem value="">
+                            <em>Leave unallocated</em>
+                          </MenuItem>
+                          {filteredCategories.map((c) => (
+                            <MenuItem key={c._id} value={c._id}>
+                              {c.name}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      )}
+                    />
+                    {category && (
+                      <Controller
+                        name="subcategory"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            select
+                            label={subcategories.length ? 'Subcategory' : 'Subcategory (none for this category)'}
+                            fullWidth
+                            disabled={subcategories.length === 0}
+                          >
+                            <MenuItem value="">
+                              <em>{subcategories.length ? 'Leave unallocated' : 'No subcategories'}</em>
+                            </MenuItem>
+                            {subcategories.map((s) => (
+                              <MenuItem key={s._id} value={s._id}>
+                                {s.name}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        )}
+                      />
+                    )}
+                  </>
+                )}
                 <Controller
                   name="paymentMethod"
                   control={control}
@@ -271,6 +371,12 @@ const TransactionFormDialog = ({
                   )}
                 </Stack>
               </>
+            )}
+
+            {classifiable && !category && (
+              <Typography variant="caption" color="text.secondary">
+                No category selected — this transaction will be marked Unallocated until you classify it.
+              </Typography>
             )}
 
             <TextField label="Note (optional)" {...register('note')} fullWidth multiline minRows={2} />

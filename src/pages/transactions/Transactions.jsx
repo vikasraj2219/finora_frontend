@@ -42,7 +42,19 @@ import { listCategories } from '../../api/categoryApi';
 import { listBankAccounts } from '../../api/bankAccountApi';
 import { listUpiAccounts } from '../../api/upiAccountApi';
 
-const TYPE_COLOR = { income: 'success', expense: 'error', transfer: 'info' };
+const TYPE_COLOR = {
+  income: 'success',
+  expense: 'error',
+  transfer: 'info',
+  adjustment: 'warning',
+  opening_balance: 'default',
+};
+
+const ALLOCATION_BADGE = {
+  UNALLOCATED: { label: '🔴 Unallocated', color: 'error' },
+  PARTIALLY_ALLOCATED: { label: '🟡 Partial', color: 'warning' },
+  FULLY_ALLOCATED: { label: '🟢 Complete', color: 'success' },
+};
 
 const describeTransaction = (t) => {
   if (t.type === 'transfer') {
@@ -50,7 +62,8 @@ const describeTransaction = (t) => {
     const to = t.transferTo?.type === 'cash' ? 'Cash' : t.transferTo?.bankAccount?.bankName || '—';
     return `${from} → ${to}`;
   }
-  return t.category?.name || '—';
+  if (!t.category) return '—';
+  return t.subcategory ? `${t.category.name} › ${t.subcategory.name}` : t.category.name;
 };
 
 const Transactions = () => {
@@ -173,6 +186,8 @@ const Transactions = () => {
                   <TableCell>Type</TableCell>
                   <TableCell>Category / Route</TableCell>
                   <TableCell>Note</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Source</TableCell>
                   <TableCell align="right">Amount</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -189,6 +204,23 @@ const Transactions = () => {
                       <Typography variant="body2" noWrap>
                         {t.note || '—'}
                       </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {ALLOCATION_BADGE[t.allocationStatus] && (
+                        <Chip
+                          size="small"
+                          label={ALLOCATION_BADGE[t.allocationStatus].label}
+                          color={ALLOCATION_BADGE[t.allocationStatus].color}
+                          variant="outlined"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        size="small"
+                        label={t.entrySource === 'IMPORTED' ? 'Imported' : 'Manual'}
+                        variant="outlined"
+                      />
                     </TableCell>
                     <TableCell align="right">
                       <Typography
@@ -231,10 +263,20 @@ const Transactions = () => {
                 <CardContent>
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                     <Box>
-                      <Chip size="small" label={t.type} color={TYPE_COLOR[t.type]} variant="outlined" sx={{ mb: 0.5 }} />
+                      <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 0.5 }}>
+                        <Chip size="small" label={t.type} color={TYPE_COLOR[t.type]} variant="outlined" />
+                        {ALLOCATION_BADGE[t.allocationStatus] && (
+                          <Chip
+                            size="small"
+                            label={ALLOCATION_BADGE[t.allocationStatus].label}
+                            color={ALLOCATION_BADGE[t.allocationStatus].color}
+                            variant="outlined"
+                          />
+                        )}
+                      </Stack>
                       <Typography fontWeight={600}>{describeTransaction(t)}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {formatDate(t.date)}
+                        {formatDate(t.date)} · {t.entrySource === 'IMPORTED' ? 'Imported' : 'Manual'}
                       </Typography>
                     </Box>
                     <Typography

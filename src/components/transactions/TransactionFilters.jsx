@@ -17,6 +17,8 @@ const TransactionFilters = ({ filters, onChange, categories, onClear }) => {
         <MenuItem value="income">Income</MenuItem>
         <MenuItem value="expense">Expense</MenuItem>
         <MenuItem value="transfer">Transfer</MenuItem>
+        <MenuItem value="adjustment">Adjustment</MenuItem>
+        <MenuItem value="opening_balance">Opening Balance</MenuItem>
       </TextField>
       <TextField
         size="small"
@@ -32,6 +34,31 @@ const TransactionFilters = ({ filters, onChange, categories, onClear }) => {
             {c.name}
           </MenuItem>
         ))}
+      </TextField>
+      <TextField
+        size="small"
+        select
+        label="Status"
+        value={filters.allocationStatus || ''}
+        onChange={set('allocationStatus')}
+        sx={{ minWidth: 170 }}
+      >
+        <MenuItem value="">All</MenuItem>
+        <MenuItem value="UNALLOCATED">🔴 Unallocated</MenuItem>
+        <MenuItem value="PARTIALLY_ALLOCATED">🟡 Partially Allocated</MenuItem>
+        <MenuItem value="FULLY_ALLOCATED">🟢 Fully Allocated</MenuItem>
+      </TextField>
+      <TextField
+        size="small"
+        select
+        label="Source"
+        value={filters.entrySource || ''}
+        onChange={set('entrySource')}
+        sx={{ minWidth: 140 }}
+      >
+        <MenuItem value="">All</MenuItem>
+        <MenuItem value="MANUAL">Manual</MenuItem>
+        <MenuItem value="IMPORTED">Imported</MenuItem>
       </TextField>
       <TextField
         size="small"

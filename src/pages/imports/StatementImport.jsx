@@ -203,8 +203,8 @@ const StatementImport = () => {
               ))}
             </TextField>
             <Typography variant="caption" color="text.secondary">
-              Rows left uncategorized are still imported, filed under "Other" / "Other Income" —
-              you can recategorize them later from Transactions.
+              Rows left without a category are still imported — they'll show up as
+              "Unallocated" or "Partially Allocated" so you can classify them anytime.
             </Typography>
           </Stack>
 
@@ -228,7 +228,7 @@ const StatementImport = () => {
             </Typography>
             <Typography color="text.secondary" mb={3}>
               {summary.created} transaction{summary.created === 1 ? '' : 's'} added
-              {summary.uncategorized > 0 ? ` (${summary.uncategorized} filed under "Other" — recategorize anytime)` : ''}
+              {summary.unallocated > 0 ? ` (${summary.unallocated} need${summary.unallocated === 1 ? 's' : ''} allocation — see Unallocated Transactions)` : ''}
               {summary.skipped > 0 ? `, ${summary.skipped} unchecked row${summary.skipped === 1 ? '' : 's'} not imported` : ''}.
             </Typography>
             <Button variant="contained" onClick={startOver}>

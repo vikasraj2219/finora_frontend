@@ -13,6 +13,7 @@ import CategoryBreakdownChart from '../../components/dashboard/CategoryBreakdown
 import PaymentMethodChart from '../../components/dashboard/PaymentMethodChart';
 import AccountUsageCard from '../../components/dashboard/AccountUsageCard';
 import YearlySummaryChart from '../../components/dashboard/YearlySummaryChart';
+import { brand } from '../../theme/palette';
 import HighlightsCard from '../../components/dashboard/HighlightsCard';
 
 import { useAuth } from '../../context/AuthContext';
@@ -104,7 +105,7 @@ const Dashboard = () => {
             label="Cash in Hand"
             value={formatCurrency(summary.cashInHand)}
             subtext="Bank balances + cash ledger"
-            color="#146C43"
+            color={brand.navy}
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
@@ -128,7 +129,7 @@ const Dashboard = () => {
             icon={SavingsIcon}
             label="Monthly Saving"
             value={formatCurrency(summary.monthlySaving)}
-            color="#C9A227"
+            color={brand.teal}
           />
         </Grid>
       </Grid>

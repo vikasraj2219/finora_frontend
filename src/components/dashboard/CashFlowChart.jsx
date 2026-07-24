@@ -1,6 +1,7 @@
 import { Line } from 'react-chartjs-2';
 import { Card, CardContent, Typography } from '@mui/material';
 import { formatCurrency } from '../../utils/formatters';
+import { brand } from '../../theme/palette';
 
 const CashFlowChart = ({ trends }) => {
   const data = {
@@ -9,8 +10,8 @@ const CashFlowChart = ({ trends }) => {
       {
         label: 'Net Cash Flow',
         data: trends.map((t) => t.netFlow),
-        borderColor: '#146C43',
-        backgroundColor: 'rgba(20, 108, 67, 0.15)',
+        borderColor: brand.teal,
+        backgroundColor: 'rgba(18, 165, 157, 0.15)',
         fill: true,
         tension: 0.35,
         pointRadius: 3,

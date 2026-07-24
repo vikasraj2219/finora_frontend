@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { Box, Paper, TextField, Button, Typography, Alert } from '@mui/material';
+import { Box, Paper, TextField, Button, Typography, Alert, InputAdornment } from '@mui/material';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useAuth } from '../../context/AuthContext';
+import AuthLayout from '../../components/layout/AuthLayout';
 
 const Login = () => {
   const { login } = useAuth();
@@ -25,15 +28,11 @@ const Login = () => {
   };
 
   return (
-    <Box
-      minHeight="100vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      bgcolor="background.default"
-      p={2}
-    >
-      <Paper sx={{ p: 4, width: '100%', maxWidth: 420, borderRadius: 3 }}>
+    <AuthLayout>
+      <Paper
+        elevation={0}
+        sx={{ p: { xs: 3, sm: 4.5 }, width: '100%', maxWidth: 420, borderRadius: 4 }}
+      >
         <Typography variant="h4" mb={0.5}>
           Welcome back
         </Typography>
@@ -51,6 +50,13 @@ const Login = () => {
           <TextField
             label="Email"
             type="email"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <MailOutlineIcon fontSize="small" color="action" />
+                </InputAdornment>
+              ),
+            }}
             {...register('email', { required: 'Email is required' })}
             error={!!errors.email}
             helperText={errors.email?.message}
@@ -58,11 +64,18 @@ const Login = () => {
           <TextField
             label="Password"
             type="password"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockOutlinedIcon fontSize="small" color="action" />
+                </InputAdornment>
+              ),
+            }}
             {...register('password', { required: 'Password is required' })}
             error={!!errors.password}
             helperText={errors.password?.message}
           />
-          <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
+          <Button type="submit" variant="contained" size="large" disabled={isSubmitting} sx={{ py: 1.25 }}>
             {isSubmitting ? 'Signing in…' : 'Sign In'}
           </Button>
         </Box>
@@ -71,7 +84,7 @@ const Login = () => {
           New here? <Link to="/register">Create the admin account</Link>
         </Typography>
       </Paper>
-    </Box>
+    </AuthLayout>
   );
 };
 

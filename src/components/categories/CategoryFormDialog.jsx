@@ -11,6 +11,7 @@ import {
   Stack,
   Box,
 } from '@mui/material';
+import { brand } from '../../theme/palette';
 
 const CategoryFormDialog = ({ open, onClose, onSubmit, initialValues, defaultType }) => {
   const isEdit = Boolean(initialValues);
@@ -20,11 +21,11 @@ const CategoryFormDialog = ({ open, onClose, onSubmit, initialValues, defaultTyp
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm({ defaultValues: { name: '', type: defaultType || 'expense', color: '#146C43' } });
+  } = useForm({ defaultValues: { name: '', type: defaultType || 'expense', color: brand.teal } });
 
   useEffect(() => {
     if (open) {
-      reset(initialValues || { name: '', type: defaultType || 'expense', color: '#146C43' });
+      reset(initialValues || { name: '', type: defaultType || 'expense', color: brand.teal });
     }
   }, [open, initialValues, defaultType, reset]);
 

@@ -1,8 +1,9 @@
 import { Pie } from 'react-chartjs-2';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import { formatCurrency } from '../../utils/formatters';
+import { brand } from '../../theme/palette';
 
-const COLORS = ['#146C43', '#C9A227', '#3B82F6', '#F59E0B', '#EC4899', '#64748B'];
+const COLORS = [brand.navy, brand.teal, '#3B82F6', '#F59E0B', '#EC4899', brand.navyLight];
 
 const PaymentMethodChart = ({ distribution }) => {
   const data = {

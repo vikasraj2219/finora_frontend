@@ -18,6 +18,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import StorefrontIcon from '@mui/icons-material/StorefrontOutlined';
 import AssessmentIcon from '@mui/icons-material/AssessmentOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
+import Logo from '../common/Logo';
 
 const DRAWER_WIDTH = 272;
 
@@ -37,23 +38,20 @@ const SidebarContent = () => {
   const theme = useTheme();
   return (
     <Box display="flex" flexDirection="column" height="100%">
-      <Box display="flex" alignItems="center" gap={1.5} px={2.5} py={3}>
+      <Box display="flex" alignItems="center" px={2.5} py={3}>
         <Box
           sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '10px',
-            bgcolor: 'primary.main',
-            display: 'flex',
+            bgcolor: '#ffffff',
+            borderRadius: 2,
+            px: 1.5,
+            py: 1,
+            display: 'inline-flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontWeight: 800,
+            boxShadow: '0 1px 2px rgba(11, 38, 67, 0.08)',
           }}
         >
-          ₹
+          <Logo variant="full" height={30} />
         </Box>
-        <Typography variant="h6">Finance Manager</Typography>
       </Box>
 
       <List sx={{ px: 1.5, flexGrow: 1 }}>
@@ -66,10 +64,10 @@ const SidebarContent = () => {
               borderRadius: 2,
               mb: 0.5,
               '&.active': {
-                bgcolor: `${theme.palette.primary.main}1A`,
-                borderLeft: `3px solid ${theme.palette.primary.main}`,
+                bgcolor: `${theme.palette.secondary.main}1F`,
+                borderLeft: `3px solid ${theme.palette.secondary.main}`,
                 '.MuiListItemIcon-root, .MuiListItemText-primary': {
-                  color: theme.palette.primary.main,
+                  color: theme.palette.secondary.dark,
                   fontWeight: 600,
                 },
               },
@@ -91,7 +89,7 @@ const SidebarContent = () => {
         bgcolor="background.default"
       >
         <Typography variant="caption" color="text.secondary">
-          v1 · Phase 2
+          Finora v1.0
         </Typography>
       </Box>
     </Box>

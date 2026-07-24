@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Dialog,
@@ -12,9 +12,13 @@ import {
   Box,
 } from '@mui/material';
 import { brand } from '../../theme/palette';
+import { listTypes } from '../../api/typeApi';
 
 const CategoryFormDialog = ({ open, onClose, onSubmit, initialValues, defaultType }) => {
   const isEdit = Boolean(initialValues);
+  // Loaded from /types (appliesToCategory=true) instead of hardcoded income/expense, so
+  // a custom category-eligible type added elsewhere shows up here automatically.
+  const [types, setTypes] = useState([{ code: 'expense', label: 'Expense' }, { code: 'income', label: 'Income' }]);
   const {
     control,
     register,
@@ -22,6 +26,17 @@ const CategoryFormDialog = ({ open, onClose, onSubmit, initialValues, defaultTyp
     reset,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: { name: '', type: defaultType || 'expense', color: brand.teal } });
+
+  useEffect(() => {
+    if (!open) return;
+    listTypes({ appliesToCategory: true })
+      .then(({ data }) => {
+        if (data.data?.length) setTypes(data.data.map((t) => ({ code: t.code, label: t.label })));
+      })
+      .catch(() => {
+        // Keep the income/expense fallback above if the request fails.
+      });
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -48,8 +63,11 @@ const CategoryFormDialog = ({ open, onClose, onSubmit, initialValues, defaultTyp
               control={control}
               render={({ field }) => (
                 <TextField {...field} select label="Type" fullWidth>
-                  <MenuItem value="expense">Expense</MenuItem>
-                  <MenuItem value="income">Income</MenuItem>
+                  {types.map((t) => (
+                    <MenuItem key={t.code} value={t.code}>
+                      {t.label}
+                    </MenuItem>
+                  ))}
                 </TextField>
               )}
             />

@@ -12,6 +12,7 @@ import {
 import DashboardIcon from '@mui/icons-material/DashboardOutlined';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalanceOutlined';
 import SwapHorizIcon from '@mui/icons-material/SwapHorizOutlined';
+import ChecklistIcon from '@mui/icons-material/ChecklistOutlined';
 import CategoryIcon from '@mui/icons-material/CategoryOutlined';
 import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import StorefrontIcon from '@mui/icons-material/StorefrontOutlined';
@@ -24,6 +25,7 @@ const navItems = [
   { label: 'Dashboard', icon: DashboardIcon, path: '/dashboard' },
   { label: 'Accounts', icon: AccountBalanceIcon, path: '/accounts' },
   { label: 'Transactions', icon: SwapHorizIcon, path: '/transactions' },
+  { label: 'Allocation', icon: ChecklistIcon, path: '/allocation' },
   { label: 'Categories', icon: CategoryIcon, path: '/categories' },
   { label: 'Import Statement', icon: UploadFileIcon, path: '/imports' },
   { label: 'Merchants', icon: StorefrontIcon, path: '/merchants' },
@@ -89,7 +91,7 @@ const SidebarContent = () => {
         bgcolor="background.default"
       >
         <Typography variant="caption" color="text.secondary">
-          v1 · Phase 1
+          v1 · Phase 2
         </Typography>
       </Box>
     </Box>

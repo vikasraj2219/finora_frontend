@@ -13,3 +13,6 @@ export const uploadTransactionReceipt = (id, file) => {
   });
 };
 export const removeTransactionReceipt = (id) => axiosInstance.delete(`/transactions/${id}/receipt`);
+
+export const bulkAllocateTransactions = (payload) => axiosInstance.post('/transactions/bulk-allocate', payload);
+export const getAllocationSummary = () => axiosInstance.get('/transactions/allocation-summary');

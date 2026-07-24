@@ -9,6 +9,8 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/dashboard/Dashboard';
 import Accounts from './pages/accounts/Accounts';
 import Categories from './pages/categories/Categories';
+import Types from './pages/types/Types';
+import Subcategories from './pages/subcategories/Subcategories';
 import Transactions from './pages/transactions/Transactions';
 import Allocation from './pages/allocation/Allocation';
 import Merchants from './pages/merchants/Merchants';
@@ -29,6 +31,8 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/categories" element={<Categories />} />
+              <Route path="/types" element={<Types />} />
+              <Route path="/subcategories" element={<Subcategories />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/allocation" element={<Allocation />} />
               <Route path="/merchants" element={<Merchants />} />

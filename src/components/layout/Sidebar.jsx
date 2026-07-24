@@ -14,6 +14,8 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalanceOutlined';
 import SwapHorizIcon from '@mui/icons-material/SwapHorizOutlined';
 import ChecklistIcon from '@mui/icons-material/ChecklistOutlined';
 import CategoryIcon from '@mui/icons-material/CategoryOutlined';
+import TuneIcon from '@mui/icons-material/TuneOutlined';
+import AccountTreeIcon from '@mui/icons-material/AccountTreeOutlined';
 import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import StorefrontIcon from '@mui/icons-material/StorefrontOutlined';
 import AssessmentIcon from '@mui/icons-material/AssessmentOutlined';
@@ -28,6 +30,8 @@ const navItems = [
   { label: 'Transactions', icon: SwapHorizIcon, path: '/transactions' },
   { label: 'Allocation', icon: ChecklistIcon, path: '/allocation' },
   { label: 'Categories', icon: CategoryIcon, path: '/categories' },
+  { label: 'Types', icon: TuneIcon, path: '/types' },
+  { label: 'Subcategories', icon: AccountTreeIcon, path: '/subcategories' },
   { label: 'Import Statement', icon: UploadFileIcon, path: '/imports' },
   { label: 'Merchants', icon: StorefrontIcon, path: '/merchants' },
   { label: 'Reports', icon: AssessmentIcon, path: '/reports' },

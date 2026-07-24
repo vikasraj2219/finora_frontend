@@ -21,6 +21,7 @@ import {
   Card,
   CardContent,
   TablePagination,
+  Grid,
 } from '@mui/material';
 import ChecklistIcon from '@mui/icons-material/ChecklistOutlined';
 import { useSnackbar } from 'notistack';
@@ -28,6 +29,8 @@ import { useSnackbar } from 'notistack';
 import PageHeader from '../../components/common/PageHeader';
 import EmptyState from '../../components/common/EmptyState';
 import TransactionFormDialog from '../../components/transactions/TransactionFormDialog';
+import AllocationTrendChart from '../../components/allocation/AllocationTrendChart';
+import EntrySourceChart from '../../components/allocation/EntrySourceChart';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 import {
@@ -35,6 +38,8 @@ import {
   updateTransaction,
   bulkAllocateTransactions,
   getAllocationSummary,
+  getAllocationTrend,
+  getEntrySourceSummary,
 } from '../../api/transactionApi';
 import { listCategories } from '../../api/categoryApi';
 import { listSubcategories } from '../../api/subcategoryApi';
@@ -72,6 +77,8 @@ const Allocation = () => {
   const [selected, setSelected] = useState([]);
 
   const [summary, setSummary] = useState(null);
+  const [trend, setTrend] = useState([]);
+  const [entrySource, setEntrySource] = useState(null);
   const [categories, setCategories] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [upiAccounts, setUpiAccounts] = useState([]);
@@ -95,6 +102,12 @@ const Allocation = () => {
     setSummary(data.data);
   }, []);
 
+  const loadDashboardCharts = useCallback(async () => {
+    const [trendRes, sourceRes] = await Promise.all([getAllocationTrend(6), getEntrySourceSummary()]);
+    setTrend(trendRes.data.data);
+    setEntrySource(sourceRes.data.data);
+  }, []);
+
   const loadRows = useCallback(async () => {
     const params = { page, limit: 20 };
     if (tab) params.allocationStatus = tab;
@@ -107,6 +120,7 @@ const Allocation = () => {
   useEffect(() => {
     loadLookups().catch(() => enqueueSnackbar('Failed to load categories/accounts', { variant: 'error' }));
     loadSummary().catch(() => {});
+    loadDashboardCharts().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -153,6 +167,7 @@ const Allocation = () => {
       setBulkSubcategory('');
       loadRows();
       loadSummary();
+      loadDashboardCharts();
     } catch (err) {
       enqueueSnackbar(err.response?.data?.message || 'Bulk allocation failed', { variant: 'error' });
     } finally {
@@ -167,6 +182,7 @@ const Allocation = () => {
       setEditing(null);
       loadRows();
       loadSummary();
+      loadDashboardCharts();
     } catch (err) {
       enqueueSnackbar(err.response?.data?.message || 'Save failed', { variant: 'error' });
     }
@@ -191,6 +207,15 @@ const Allocation = () => {
           </CardContent>
         </Card>
       )}
+
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={8}>
+          <AllocationTrendChart trend={trend} />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <EntrySourceChart summary={entrySource} />
+        </Grid>
+      </Grid>
 
       <Tabs
         value={tab}

@@ -16,3 +16,8 @@ export const removeTransactionReceipt = (id) => axiosInstance.delete(`/transacti
 
 export const bulkAllocateTransactions = (payload) => axiosInstance.post('/transactions/bulk-allocate', payload);
 export const getAllocationSummary = () => axiosInstance.get('/transactions/allocation-summary');
+export const getAccountLedger = (params) => axiosInstance.get('/transactions/account-ledger', { params });
+export const getAccountStats = (params) => axiosInstance.get('/transactions/account-stats', { params });
+export const getAccountsAllocationSummary = () => axiosInstance.get('/transactions/accounts-allocation-summary');
+export const getAllocationTrend = (months) => axiosInstance.get('/transactions/allocation-trend', { params: { months } });
+export const getEntrySourceSummary = () => axiosInstance.get('/transactions/entry-source-summary');

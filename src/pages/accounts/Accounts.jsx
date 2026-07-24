@@ -27,6 +27,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import BankAccountFormDialog from '../../components/accounts/BankAccountFormDialog';
 import UpiAccountFormDialog from '../../components/accounts/UpiAccountFormDialog';
 import CashAdjustDialog from '../../components/accounts/CashAdjustDialog';
+import AccountLedgerDialog from '../../components/allocation/AccountLedgerDialog';
 import { formatCurrency } from '../../utils/formatters';
 
 import {
@@ -44,6 +45,7 @@ import {
   deleteUpiAccount,
 } from '../../api/upiAccountApi';
 import { getCashBalance, adjustCashBalance } from '../../api/cashApi';
+import { getAccountsAllocationSummary } from '../../api/transactionApi';
 
 const Accounts = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -52,6 +54,8 @@ const Accounts = () => {
   const [bankAccounts, setBankAccounts] = useState([]);
   const [upiAccounts, setUpiAccounts] = useState([]);
   const [cash, setCash] = useState(null);
+  const [allocationByAccount, setAllocationByAccount] = useState({ bank: {}, upi: {} });
+  const [ledgerTarget, setLedgerTarget] = useState(null); // { account, type }
 
   const [bankDialogOpen, setBankDialogOpen] = useState(false);
   const [upiDialogOpen, setUpiDialogOpen] = useState(false);
@@ -86,6 +90,10 @@ const Accounts = () => {
     } else {
       enqueueSnackbar('Failed to load cash in hand', { variant: 'error' });
     }
+
+    getAccountsAllocationSummary()
+      .then(({ data }) => setAllocationByAccount(data.data))
+      .catch(() => {});
   }, [enqueueSnackbar]);
 
   useEffect(() => {
@@ -285,6 +293,21 @@ const Accounts = () => {
                     <Box mt={1.5}>
                       <StatusChip isActive={acc.isActive} />
                     </Box>
+                    {allocationByAccount.bank[acc._id] && (
+                      <Typography variant="caption" color="text.secondary" display="block" mt={1.5}>
+                        {allocationByAccount.bank[acc._id].totalTransactions} txns · 🔴{' '}
+                        {allocationByAccount.bank[acc._id].unallocated} · 🟡{' '}
+                        {allocationByAccount.bank[acc._id].partiallyAllocated} · 🟢{' '}
+                        {allocationByAccount.bank[acc._id].fullyAllocated}
+                      </Typography>
+                    )}
+                    <Button
+                      size="small"
+                      sx={{ mt: 1 }}
+                      onClick={() => setLedgerTarget({ account: acc, type: 'bank' })}
+                    >
+                      View Transactions
+                    </Button>
                   </CardContent>
                 </Card>
               </Grid>
@@ -350,6 +373,21 @@ const Accounts = () => {
                       )}
                       <StatusChip isActive={acc.isActive} />
                     </Box>
+                    {allocationByAccount.upi[acc._id] && (
+                      <Typography variant="caption" color="text.secondary" display="block" mt={1.5}>
+                        {allocationByAccount.upi[acc._id].totalTransactions} txns · 🔴{' '}
+                        {allocationByAccount.upi[acc._id].unallocated} · 🟡{' '}
+                        {allocationByAccount.upi[acc._id].partiallyAllocated} · 🟢{' '}
+                        {allocationByAccount.upi[acc._id].fullyAllocated}
+                      </Typography>
+                    )}
+                    <Button
+                      size="small"
+                      sx={{ mt: 1 }}
+                      onClick={() => setLedgerTarget({ account: acc, type: 'upi' })}
+                    >
+                      View Transactions
+                    </Button>
                   </CardContent>
                 </Card>
               </Grid>
@@ -432,6 +470,13 @@ const Accounts = () => {
         confirmLabel="Delete"
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+      />
+
+      <AccountLedgerDialog
+        open={Boolean(ledgerTarget)}
+        account={ledgerTarget?.account}
+        accountType={ledgerTarget?.type}
+        onClose={() => setLedgerTarget(null)}
       />
     </Box>
   );

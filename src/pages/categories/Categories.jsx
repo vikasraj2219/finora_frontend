@@ -1,38 +1,25 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  Box,
-  Tabs,
-  Tab,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  IconButton,
-  Button,
-  Chip,
-  Tooltip,
-} from '@mui/material';
+import { Box, Tabs, Tab, Grid, Chip, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/EditOutlined';
-import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import CategoryIcon from '@mui/icons-material/CategoryOutlined';
 import TuneIcon from '@mui/icons-material/TuneOutlined';
-import AccountTreeIcon from '@mui/icons-material/AccountTreeOutlined';
 import { useSnackbar } from 'notistack';
 
 import PageHeader from '../../components/common/PageHeader';
 import EmptyState from '../../components/common/EmptyState';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import ManagedItemCard from '../../components/common/ManagedItemCard';
 import CategoryFormDialog from '../../components/categories/CategoryFormDialog';
-import TypeManagerDialog from '../../components/types/TypeManagerDialog';
-import SubcategoryManagerDialog from '../../components/subcategories/SubcategoryManagerDialog';
 import { listCategories, createCategory, updateCategory, deleteCategory } from '../../api/categoryApi';
 import { listTypes } from '../../api/typeApi';
+import { getIconComponent } from '../../utils/iconRegistry';
 
+// Types and Subcategories now live on their own dedicated pages (see the sidebar) —
+// this page focuses purely on categories, one type at a time via the tabs.
 const Categories = () => {
   const { enqueueSnackbar } = useSnackbar();
   // Tabs are driven by the real Type collection (appliesToCategory=true) instead of a
-  // hardcoded income/expense pair, so a custom type added via "Manage Types" shows up
+  // hardcoded income/expense pair, so a custom type added on the Types page shows up
   // as its own tab automatically.
   const [types, setTypes] = useState([]);
   const [tab, setTab] = useState('');
@@ -40,8 +27,6 @@ const Categories = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [typeManagerOpen, setTypeManagerOpen] = useState(false);
-  const [subcategoryTarget, setSubcategoryTarget] = useState(null);
 
   const loadTypes = useCallback(async () => {
     const { data } = await listTypes({ appliesToCategory: true });
@@ -101,21 +86,16 @@ const Categories = () => {
         title="Categories"
         subtitle="Organize how your income and expenses are classified"
         action={
-          <Box display="flex" gap={1}>
-            <Button startIcon={<TuneIcon />} variant="outlined" onClick={() => setTypeManagerOpen(true)}>
-              Manage Types
-            </Button>
-            <Button
-              startIcon={<AddIcon />}
-              variant="contained"
-              onClick={() => {
-                setEditing(null);
-                setDialogOpen(true);
-              }}
-            >
-              Add Category
-            </Button>
-          </Box>
+          <Button
+            startIcon={<AddIcon />}
+            variant="contained"
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+          >
+            Add Category
+          </Button>
         }
       />
 
@@ -135,14 +115,12 @@ const Categories = () => {
         <EmptyState
           icon={TuneIcon}
           title="No category-eligible types yet"
-          description="Add a type (like Income or Expense) before you can create categories under it."
-          actionLabel="Manage Types"
-          onAction={() => setTypeManagerOpen(true)}
+          description="Add a type (like Income or Expense) from the Types page before you can create categories under it."
         />
       ) : categories.length === 0 ? (
         <EmptyState
           icon={CategoryIcon}
-          title={`No categories yet`}
+          title="No categories yet"
           description="Add a category to start organizing your transactions."
           actionLabel="Add Category"
           onAction={() => setDialogOpen(true)}
@@ -151,51 +129,18 @@ const Categories = () => {
         <Grid container spacing={2}>
           {categories.map((cat) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={cat._id}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Box display="flex" alignItems="center" gap={1.5}>
-                      <Box
-                        sx={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: '10px',
-                          bgcolor: `${cat.color}1A`,
-                          color: cat.color,
-                        }}
-                      />
-                      <Box>
-                        <Typography fontWeight={600}>{cat.name}</Typography>
-                        {cat.isDefault && <Chip size="small" label="Default" sx={{ mt: 0.5 }} />}
-                      </Box>
-                    </Box>
-                    <Box>
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setEditing(cat);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => setDeleteTarget(cat)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                  <Tooltip title="Manage subcategories">
-                    <Button
-                      size="small"
-                      startIcon={<AccountTreeIcon fontSize="small" />}
-                      sx={{ mt: 1.5 }}
-                      onClick={() => setSubcategoryTarget(cat)}
-                    >
-                      Subcategories
-                    </Button>
-                  </Tooltip>
-                </CardContent>
-              </Card>
+              <ManagedItemCard
+                color={cat.color}
+                icon={getIconComponent(cat.icon)}
+                title={cat.name}
+                meta={cat.group}
+                badges={cat.isDefault ? <Chip size="small" label="Default" /> : null}
+                onEdit={() => {
+                  setEditing(cat);
+                  setDialogOpen(true);
+                }}
+                onDelete={() => setDeleteTarget(cat)}
+              />
             </Grid>
           ))}
         </Grid>
@@ -219,18 +164,6 @@ const Categories = () => {
         confirmLabel="Delete"
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
-      />
-
-      <TypeManagerDialog
-        open={typeManagerOpen}
-        onClose={() => setTypeManagerOpen(false)}
-        onChanged={loadTypes}
-      />
-
-      <SubcategoryManagerDialog
-        open={Boolean(subcategoryTarget)}
-        category={subcategoryTarget}
-        onClose={() => setSubcategoryTarget(null)}
       />
     </Box>
   );

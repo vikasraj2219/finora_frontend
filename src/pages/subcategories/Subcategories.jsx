@@ -1,22 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  Box,
-  Tabs,
-  Tab,
-  TextField,
-  MenuItem,
-  Card,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Chip,
-  Button,
-  Stack,
-} from '@mui/material';
+import { Box, Tabs, Tab, TextField, MenuItem, Grid, Button, Stack, Chip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/EditOutlined';
-import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import AccountTreeIcon from '@mui/icons-material/AccountTreeOutlined';
 import CategoryIcon from '@mui/icons-material/CategoryOutlined';
 import { useSnackbar } from 'notistack';
@@ -24,17 +8,16 @@ import { useSnackbar } from 'notistack';
 import PageHeader from '../../components/common/PageHeader';
 import EmptyState from '../../components/common/EmptyState';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import ManagedItemCard from '../../components/common/ManagedItemCard';
 import SubcategoryFormDialog from '../../components/subcategories/SubcategoryFormDialog';
 import { listTypes } from '../../api/typeApi';
 import { listCategories } from '../../api/categoryApi';
 import { listSubcategories, createSubcategory, updateSubcategory, deleteSubcategory } from '../../api/subcategoryApi';
+import { getIconComponent } from '../../utils/iconRegistry';
 
 // Full-page home for Subcategory management (Type → Category → Subcategory, spec
-// section 6). Type tabs narrow the category dropdown, the category dropdown narrows
-// the subcategory list — the same cascade used when allocating a transaction. Same
-// CRUD as the per-category "Subcategories" dialog on the Categories page, promoted to
-// its own sidebar destination for browsing without needing to open a specific category
-// card first.
+// section 6). Type tabs narrow the category picker, the category picker narrows the
+// subcategory list — the same cascade used when allocating a transaction.
 const Subcategories = () => {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -157,22 +140,35 @@ const Subcategories = () => {
         />
       ) : (
         <>
-          <Stack direction="row" spacing={2} mb={2}>
-            <TextField
-              select
-              size="small"
-              label="Category"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              sx={{ minWidth: 260 }}
-            >
-              {categories.map((c) => (
-                <MenuItem key={c._id} value={c._id}>
-                  {c.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
+          <TextField
+            select
+            size="small"
+            label="Category"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            sx={{ minWidth: 260, mb: 3 }}
+            SelectProps={{
+              renderValue: (val) => {
+                const c = categories.find((x) => x._id === val);
+                if (!c) return '';
+                return (
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: c.color }} />
+                    <span>{c.name}</span>
+                  </Stack>
+                );
+              },
+            }}
+          >
+            {categories.map((c) => (
+              <MenuItem key={c._id} value={c._id}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: c.color }} />
+                  <span>{c.name}</span>
+                </Stack>
+              </MenuItem>
+            ))}
+          </TextField>
 
           {subcategories.length === 0 ? (
             <EmptyState
@@ -183,43 +179,24 @@ const Subcategories = () => {
               onAction={() => setFormOpen(true)}
             />
           ) : (
-            <Card>
-              <List disablePadding>
-                {subcategories.map((s) => (
-                  <ListItem
-                    key={s._id}
-                    divider
-                    secondaryAction={
-                      <Box>
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setEditing(s);
-                            setFormOpen(true);
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => setDeleteTarget(s)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    }
-                  >
-                    <ListItemText
-                      primary={
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Box component="span" sx={{ fontWeight: 600 }}>
-                            {s.name}
-                          </Box>
-                          {s.isDefault && <Chip size="small" label="Default" />}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Card>
+            <Grid container spacing={2}>
+              {subcategories.map((s) => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={s._id}>
+                  <ManagedItemCard
+                    color={selectedCategory?.color}
+                    icon={getIconComponent(s.icon)}
+                    title={s.name}
+                    meta={selectedCategory?.name}
+                    badges={s.isDefault ? <Chip size="small" label="Default" /> : null}
+                    onEdit={() => {
+                      setEditing(s);
+                      setFormOpen(true);
+                    }}
+                    onDelete={() => setDeleteTarget(s)}
+                  />
+                </Grid>
+              ))}
+            </Grid>
           )}
         </>
       )}

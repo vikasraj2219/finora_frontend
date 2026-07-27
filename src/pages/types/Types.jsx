@@ -1,31 +1,21 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  Box,
-  Card,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Chip,
-  Button,
-} from '@mui/material';
+import { Box, Grid, Chip, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/EditOutlined';
-import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import TuneIcon from '@mui/icons-material/TuneOutlined';
 import { useSnackbar } from 'notistack';
 
 import PageHeader from '../../components/common/PageHeader';
 import EmptyState from '../../components/common/EmptyState';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import ManagedItemCard from '../../components/common/ManagedItemCard';
 import TypeFormDialog from '../../components/types/TypeFormDialog';
 import { listTypes, createType, updateType, deleteType } from '../../api/typeApi';
+import { getIconComponent } from '../../utils/iconRegistry';
 
 // Full-page home for Type management (Type → Category → Subcategory, spec section 4).
 // Shows every type — the 5 system types (income/expense/transfer/adjustment/opening
 // balance, uneditable code, undeletable) plus any custom category-eligible types this
-// user has added. Same CRUD as the "Manage Types" dialog on the Categories page, just
-// promoted to its own sidebar destination.
+// user has added.
 const Types = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [types, setTypes] = useState([]);
@@ -92,60 +82,39 @@ const Types = () => {
       />
 
       {types.length === 0 ? (
-        <EmptyState icon={TuneIcon} title="No types yet" description="Add a type to get started." />
+        <EmptyState
+          icon={TuneIcon}
+          title="No types yet"
+          description="Add a type to get started."
+          actionLabel="Add Type"
+          onAction={() => setFormOpen(true)}
+        />
       ) : (
-        <Card>
-          <List disablePadding>
-            {types.map((t) => (
-              <ListItem
-                key={t._id}
-                divider
-                secondaryAction={
-                  <Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setEditing(t);
-                        setFormOpen(true);
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    {!t.isSystem && (
-                      <IconButton size="small" onClick={() => setDeleteTarget(t)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+        <Grid container spacing={2}>
+          {types.map((t) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={t._id}>
+              <ManagedItemCard
+                color={t.color}
+                icon={getIconComponent(t.icon)}
+                title={t.label}
+                meta={t.code}
+                badges={
+                  <>
+                    {t.isSystem && <Chip size="small" label="System" />}
+                    {t.appliesToCategory && (
+                      <Chip size="small" label="Category-eligible" color="success" variant="outlined" />
                     )}
-                  </Box>
+                  </>
                 }
-              >
-                <ListItemText
-                  primary={
-                    <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                      <Box
-                        sx={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: '50%',
-                          bgcolor: t.color || '#64748B',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Box component="span" sx={{ fontWeight: 600 }}>
-                        {t.label}
-                      </Box>
-                      <Chip size="small" label={t.code} variant="outlined" />
-                      {t.isSystem && <Chip size="small" label="System" />}
-                      {t.appliesToCategory && (
-                        <Chip size="small" label="Category-eligible" color="success" variant="outlined" />
-                      )}
-                    </Box>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Card>
+                onEdit={() => {
+                  setEditing(t);
+                  setFormOpen(true);
+                }}
+                onDelete={t.isSystem ? undefined : () => setDeleteTarget(t)}
+              />
+            </Grid>
+          ))}
+        </Grid>
       )}
 
       <TypeFormDialog

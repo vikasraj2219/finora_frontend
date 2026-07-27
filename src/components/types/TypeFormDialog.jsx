@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import {
   Dialog,
   DialogTitle,
@@ -12,6 +12,7 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material';
+import { getIconComponent } from '../../utils/iconRegistry';
 
 const EMPTY = { code: '', label: '', appliesToCategory: false, icon: '', color: '#64748B' };
 
@@ -24,6 +25,10 @@ const TypeFormDialog = ({ open, onClose, onSubmit, initialValues }) => {
     reset,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: EMPTY });
+
+  const previewIcon = useWatch({ control, name: 'icon' });
+  const previewColor = useWatch({ control, name: 'color' });
+  const PreviewIcon = getIconComponent(previewIcon);
 
   useEffect(() => {
     if (!open) return;
@@ -78,7 +83,29 @@ const TypeFormDialog = ({ open, onClose, onSubmit, initialValues }) => {
                 />
               )}
             />
-            <TextField label="Icon (Material icon name)" {...register('icon')} fullWidth />
+            <Stack direction="row" spacing={2} alignItems="center">
+              <TextField
+                label="Icon (Material icon name)"
+                helperText="e.g. work, restaurant, flight — unrecognized names fall back to a generic icon"
+                {...register('icon')}
+                fullWidth
+              />
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  flexShrink: 0,
+                  borderRadius: 2,
+                  bgcolor: `${previewColor || '#64748B'}1F`,
+                  color: previewColor || '#64748B',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <PreviewIcon fontSize="small" />
+              </Box>
+            </Stack>
             <TextField label="Color" type="color" {...register('color')} sx={{ width: 100 }} />
           </Stack>
         </DialogContent>

@@ -1,9 +1,9 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 import { getPalette, brand } from './palette';
 import { typography } from './typography';
 
 export const createAppTheme = (mode = 'light') =>
-  createTheme({
+  responsiveFontSizes(createTheme({
     palette: getPalette(mode),
     typography,
     shape: { borderRadius: 12 },
@@ -58,4 +58,4 @@ export const createAppTheme = (mode = 'light') =>
         },
       },
     },
-  });
+  }));

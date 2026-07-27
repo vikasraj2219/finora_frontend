@@ -122,7 +122,15 @@ const StatementImport = () => {
     <Box>
       <PageHeader title="Import Statement" subtitle="Bring in transactions from a CSV, Excel, or PDF bank statement" />
 
-      <Stepper activeStep={activeStep} sx={{ mb: 3, maxWidth: 560 }}>
+      <Stepper
+        activeStep={activeStep}
+        alternativeLabel
+        sx={{
+          mb: 3,
+          maxWidth: 560,
+          '& .MuiStepLabel-label': { fontSize: { xs: 12, sm: 14 } },
+        }}
+      >
         {STEPS.map((label) => (
           <Step key={label}>
             <StepLabel>{label}</StepLabel>
@@ -184,13 +192,13 @@ const StatementImport = () => {
             unchecked by default — review before including them.
           </Typography>
 
-          <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} mb={1.5}>
             <TextField
               select
               size="small"
               label="Set category for all selected"
               value=""
-              sx={{ minWidth: 220 }}
+              sx={{ minWidth: { xs: '100%', sm: 220 } }}
               onChange={(e) => {
                 const value = e.target.value;
                 setRows((prev) => prev.map((r) => (r.include ? { ...r, category: value } : r)));

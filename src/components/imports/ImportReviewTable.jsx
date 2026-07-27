@@ -17,8 +17,8 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 // One row per parsed statement line — category/merchant are editable before confirming,
 // and likely-duplicate rows are pre-unchecked with a warning chip.
 const ImportReviewTable = ({ rows, categories, onRowChange }) => (
-  <TableContainer component={Paper} sx={{ mt: 2 }}>
-    <Table size="small">
+  <TableContainer component={Paper} sx={{ mt: 2, overflowX: 'auto' }}>
+    <Table size="small" sx={{ minWidth: 760 }}>
       <TableHead>
         <TableRow>
           <TableCell padding="checkbox" />

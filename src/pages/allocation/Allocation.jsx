@@ -224,7 +224,13 @@ const Allocation = () => {
       {summary && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Stack direction="row" justifyContent="space-between" mb={1}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={0.5}
+              justifyContent="space-between"
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              mb={1}
+            >
               <Typography variant="body2" color="text.secondary">
                 {summary.fullyAllocatedPct}% of {summary.total} transactions fully allocated
               </Typography>
@@ -277,7 +283,7 @@ const Allocation = () => {
                   setBulkType(e.target.value);
                   setBulkCategory('');
                 }}
-                sx={{ minWidth: 150 }}
+                sx={{ minWidth: { xs: '100%', sm: 150 } }}
               >
                 <MenuItem value="">
                   <em>Not set</em>
@@ -294,7 +300,7 @@ const Allocation = () => {
                 label="Category"
                 value={bulkCategory}
                 onChange={(e) => setBulkCategory(e.target.value)}
-                sx={{ minWidth: 220 }}
+                sx={{ minWidth: { xs: '100%', sm: 220 } }}
               >
                 <MenuItem value="">
                   <em>Not set</em>
@@ -313,7 +319,7 @@ const Allocation = () => {
                 label="Subcategory (optional)"
                 value={bulkSubcategory}
                 onChange={(e) => setBulkSubcategory(e.target.value)}
-                sx={{ minWidth: 200 }}
+                sx={{ minWidth: { xs: '100%', sm: 200 } }}
                 disabled={!bulkCategory || bulkSubcategories.length === 0}
               >
                 <MenuItem value="">
@@ -345,7 +351,8 @@ const Allocation = () => {
         <EmptyState icon={ChecklistIcon} title="Nothing here" description="No transactions match this allocation status." />
       ) : (
         <>
-          <TableContainer component={Paper}>
+          {/* Desktop: full table. Mobile: stacked cards — avoids horizontal scrolling on small screens. */}
+          <TableContainer component={Paper} sx={{ display: { xs: 'none', md: 'block' } }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -414,6 +421,60 @@ const Allocation = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          <Stack spacing={1.5} sx={{ display: { xs: 'flex', md: 'none' } }}>
+            {rows.map((t) => (
+              <Card key={t._id} sx={{ cursor: 'pointer' }} onClick={() => setEditing(t)}>
+                <CardContent>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                    <Stack direction="row" spacing={1} alignItems="flex-start">
+                      <Checkbox
+                        size="small"
+                        checked={selected.includes(t._id)}
+                        onChange={() => toggleRow(t._id)}
+                        onClick={(e) => e.stopPropagation()}
+                        sx={{ p: 0, mt: 0.25 }}
+                      />
+                      <Box>
+                        <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 0.5 }}>
+                          <Chip size="small" label={t.type} variant="outlined" />
+                          {!t.typeAllocated && (
+                            <Chip size="small" label="?" variant="outlined" sx={{ minWidth: 22 }} />
+                          )}
+                          {t.allocationStatus === 'UNALLOCATED' && (
+                            <Chip size="small" label="🔴 Unallocated" color="error" variant="outlined" />
+                          )}
+                          {t.allocationStatus === 'PARTIALLY_ALLOCATED' && (
+                            <Chip size="small" label="🟡 Partial" color="warning" variant="outlined" />
+                          )}
+                          {t.allocationStatus === 'FULLY_ALLOCATED' && (
+                            <Chip size="small" label="🟢 Complete" color="success" variant="outlined" />
+                          )}
+                        </Stack>
+                        <Typography fontWeight={600}>
+                          {t.type === 'transfer'
+                            ? describeRoute(t)
+                            : t.subcategory
+                            ? `${t.category?.name || '—'} › ${t.subcategory.name}`
+                            : t.category?.name || '—'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDate(t.date)} · {t.entrySource === 'IMPORTED' ? 'Imported' : 'Manual'}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                    <Typography
+                      fontWeight={700}
+                      color={t.type === 'income' ? 'success.main' : t.type === 'expense' ? 'error.main' : 'text.primary'}
+                    >
+                      {t.type === 'expense' ? '-' : t.type === 'income' ? '+' : ''}
+                      {formatCurrency(t.amount)}
+                    </Typography>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
 
           <TablePagination
             component="div"

@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   Typography,
+  Stack,
   Tabs,
   Tab,
   Table,
@@ -20,6 +21,8 @@ import {
   Chip,
   TablePagination,
   IconButton,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -41,6 +44,8 @@ const describeRoute = (t) => {
 
 // Spec sections 11–13: the drill-down ledger + stats for one bank or UPI account.
 const AccountLedgerDialog = ({ open, onClose, account, accountType }) => {
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [stats, setStats] = useState(null);
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState({ totalItems: 0, currentPage: 1, pageSize: 20 });
@@ -78,7 +83,7 @@ const AccountLedgerDialog = ({ open, onClose, account, accountType }) => {
   if (!account) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={fullScreen}>
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">{account.bankName || account.nickname || account.provider}</Typography>
@@ -136,7 +141,7 @@ const AccountLedgerDialog = ({ open, onClose, account, accountType }) => {
           </Typography>
         ) : (
           <>
-            <TableContainer component={Paper} variant="outlined">
+            <TableContainer component={Paper} variant="outlined" sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -179,6 +184,46 @@ const AccountLedgerDialog = ({ open, onClose, account, accountType }) => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            <Stack spacing={1.5} sx={{ display: { xs: 'flex', sm: 'none' } }}>
+              {rows.map((t) => (
+                <Card key={t._id} variant="outlined">
+                  <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                      <Box>
+                        <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 0.5 }}>
+                          <Chip size="small" label={t.type} variant="outlined" />
+                          {!t.typeAllocated && (
+                            <Chip size="small" label="?" variant="outlined" sx={{ minWidth: 22 }} />
+                          )}
+                          {t.allocationStatus === 'UNALLOCATED' && <Chip size="small" label="🔴" variant="outlined" />}
+                          {t.allocationStatus === 'PARTIALLY_ALLOCATED' && <Chip size="small" label="🟡" variant="outlined" />}
+                          {t.allocationStatus === 'FULLY_ALLOCATED' && <Chip size="small" label="🟢" variant="outlined" />}
+                        </Stack>
+                        <Typography fontWeight={600}>
+                          {t.type === 'transfer'
+                            ? describeRoute(t)
+                            : t.subcategory
+                            ? `${t.category?.name || '—'} › ${t.subcategory.name}`
+                            : t.category?.name || '—'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDate(t.date)}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        fontWeight={700}
+                        color={t.type === 'income' ? 'success.main' : t.type === 'expense' ? 'error.main' : 'text.primary'}
+                      >
+                        {t.type === 'expense' ? '-' : t.type === 'income' ? '+' : ''}
+                        {formatCurrency(t.amount)}
+                      </Typography>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
+
             <TablePagination
               component="div"
               count={meta.totalItems}

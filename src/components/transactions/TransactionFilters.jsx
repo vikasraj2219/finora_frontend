@@ -10,9 +10,9 @@ const TransactionFilters = ({ filters, onChange, categories, onClear }) => {
         placeholder="Search notes…"
         value={filters.search || ''}
         onChange={set('search')}
-        sx={{ minWidth: 200 }}
+        sx={{ minWidth: { xs: '100%', sm: 200 } }}
       />
-      <TextField size="small" select label="Type" value={filters.type || ''} onChange={set('type')} sx={{ minWidth: 140 }}>
+      <TextField size="small" select label="Type" value={filters.type || ''} onChange={set('type')} sx={{ minWidth: { xs: '100%', sm: 140 } }}>
         <MenuItem value="">All</MenuItem>
         <MenuItem value="income">Income</MenuItem>
         <MenuItem value="expense">Expense</MenuItem>
@@ -26,7 +26,7 @@ const TransactionFilters = ({ filters, onChange, categories, onClear }) => {
         label="Category"
         value={filters.category || ''}
         onChange={set('category')}
-        sx={{ minWidth: 160 }}
+        sx={{ minWidth: { xs: '100%', sm: 160 } }}
       >
         <MenuItem value="">All</MenuItem>
         {categories.map((c) => (
@@ -41,7 +41,7 @@ const TransactionFilters = ({ filters, onChange, categories, onClear }) => {
         label="Status"
         value={filters.allocationStatus || ''}
         onChange={set('allocationStatus')}
-        sx={{ minWidth: 170 }}
+        sx={{ minWidth: { xs: '100%', sm: 170 } }}
       >
         <MenuItem value="">All</MenuItem>
         <MenuItem value="UNALLOCATED">🔴 Unallocated</MenuItem>
@@ -54,7 +54,7 @@ const TransactionFilters = ({ filters, onChange, categories, onClear }) => {
         label="Source"
         value={filters.entrySource || ''}
         onChange={set('entrySource')}
-        sx={{ minWidth: 140 }}
+        sx={{ minWidth: { xs: '100%', sm: 140 } }}
       >
         <MenuItem value="">All</MenuItem>
         <MenuItem value="MANUAL">Manual</MenuItem>
@@ -67,7 +67,7 @@ const TransactionFilters = ({ filters, onChange, categories, onClear }) => {
         InputLabelProps={{ shrink: true }}
         value={filters.dateFrom || ''}
         onChange={set('dateFrom')}
-        sx={{ minWidth: 150 }}
+        sx={{ minWidth: { xs: '100%', sm: 150 } }}
       />
       <TextField
         size="small"
@@ -76,7 +76,7 @@ const TransactionFilters = ({ filters, onChange, categories, onClear }) => {
         InputLabelProps={{ shrink: true }}
         value={filters.dateTo || ''}
         onChange={set('dateTo')}
-        sx={{ minWidth: 150 }}
+        sx={{ minWidth: { xs: '100%', sm: 150 } }}
       />
       <Button onClick={onClear} size="small">
         Clear

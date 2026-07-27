@@ -15,6 +15,8 @@ export const uploadTransactionReceipt = (id, file) => {
 export const removeTransactionReceipt = (id) => axiosInstance.delete(`/transactions/${id}/receipt`);
 
 export const bulkAllocateTransactions = (payload) => axiosInstance.post('/transactions/bulk-allocate', payload);
+export const bulkDeleteTransactions = (transactionIds) =>
+  axiosInstance.post('/transactions/bulk-delete', { transactionIds });
 export const getAllocationSummary = () => axiosInstance.get('/transactions/allocation-summary');
 export const getAccountLedger = (params) => axiosInstance.get('/transactions/account-ledger', { params });
 export const getAccountStats = (params) => axiosInstance.get('/transactions/account-stats', { params });

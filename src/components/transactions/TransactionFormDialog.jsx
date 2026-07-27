@@ -189,6 +189,13 @@ const TransactionFormDialog = ({
               )}
             />
 
+            {isEdit && initialValues?.typeAllocated === false && (
+              <Typography variant="caption" color="warning.main">
+                This type was auto-detected from the import, not yet confirmed by you — saving this form
+                confirms it.
+              </Typography>
+            )}
+
             <Stack direction="row" spacing={2}>
               <TextField
                 label="Amount"

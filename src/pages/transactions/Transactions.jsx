@@ -10,12 +10,14 @@ import {
   TableContainer,
   Paper,
   Chip,
+  Checkbox,
   IconButton,
   TablePagination,
   Card,
   CardContent,
   Typography,
   Stack,
+  Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
@@ -37,6 +39,7 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  bulkDeleteTransactions,
 } from '../../api/transactionApi';
 import { listCategories } from '../../api/categoryApi';
 import { listBankAccounts } from '../../api/bankAccountApi';
@@ -56,21 +59,33 @@ const ALLOCATION_BADGE = {
   FULLY_ALLOCATED: { label: '🟢 Complete', color: 'success' },
 };
 
-const describeTransaction = (t) => {
-  if (t.type === 'transfer') {
-    const from = t.transferFrom?.type === 'cash' ? 'Cash' : t.transferFrom?.bankAccount?.bankName || '—';
-    const to = t.transferTo?.type === 'cash' ? 'Cash' : t.transferTo?.bankAccount?.bankName || '—';
-    return `${from} → ${to}`;
-  }
-  if (!t.category) return '—';
-  return t.subcategory ? `${t.category.name} › ${t.subcategory.name}` : t.category.name;
+const describeRoute = (t) => {
+  if (t.type !== 'transfer') return null;
+  const from = t.transferFrom?.type === 'cash' ? 'Cash' : t.transferFrom?.bankAccount?.bankName || '—';
+  const to = t.transferTo?.type === 'cash' ? 'Cash' : t.transferTo?.bankAccount?.bankName || '—';
+  return `${from} → ${to}`;
 };
+
+// Type/Category/Subcategory are the three allocation dimensions — shown as their own
+// columns everywhere transactions are listed, with the Type chip flagged when it hasn't
+// been explicitly confirmed yet (e.g. auto-inferred from a statement's DEBIT/CREDIT).
+const TypeCell = ({ t }) => (
+  <Stack direction="row" spacing={0.5} alignItems="center">
+    <Chip size="small" label={t.type} color={TYPE_COLOR[t.type]} variant="outlined" />
+    {!t.typeAllocated && (
+      <Tooltip title="Auto-detected from import — not yet confirmed">
+        <Chip size="small" label="?" variant="outlined" sx={{ minWidth: 24 }} />
+      </Tooltip>
+    )}
+  </Stack>
+);
 
 const Transactions = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState({ totalItems: 0, currentPage: 1, pageSize: 10 });
   const [filters, setFilters] = useState({ page: 1, limit: 10 });
+  const [selected, setSelected] = useState([]);
 
   const [categories, setCategories] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
@@ -79,6 +94,7 @@ const Transactions = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [receiptTarget, setReceiptTarget] = useState(null);
 
   const loadLookups = useCallback(async () => {
@@ -96,6 +112,7 @@ const Transactions = () => {
     const { data } = await listTransactions(filters);
     setRows(data.data.items);
     setMeta(data.data.meta);
+    setSelected([]);
   }, [filters]);
 
   useEffect(() => {
@@ -136,9 +153,33 @@ const Transactions = () => {
     }
   };
 
+  const confirmBulkDelete = async () => {
+    try {
+      const { data } = await bulkDeleteTransactions(selected);
+      const { deleted, skippedCount } = data.data;
+      enqueueSnackbar(
+        `${deleted} transaction${deleted === 1 ? '' : 's'} deleted${skippedCount ? `, ${skippedCount} skipped` : ''}`,
+        { variant: skippedCount ? 'warning' : 'success' }
+      );
+      setBulkDeleteOpen(false);
+      loadTransactions();
+    } catch (err) {
+      enqueueSnackbar(err.response?.data?.message || 'Bulk delete failed', { variant: 'error' });
+    }
+  };
+
   const handleReceiptUpdated = (updatedTxn) => {
     setRows((prev) => prev.map((r) => (r._id === updatedTxn._id ? { ...r, receiptUrl: updatedTxn.receiptUrl } : r)));
     setReceiptTarget((prev) => (prev ? { ...prev, receiptUrl: updatedTxn.receiptUrl } : prev));
+  };
+
+  const toggleRow = (id) => {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const toggleAll = () => {
+    const ids = rows.map((r) => r._id);
+    setSelected((prev) => (prev.length === ids.length ? [] : ids));
   };
 
   return (
@@ -167,6 +208,22 @@ const Transactions = () => {
         onClear={() => setFilters({ page: 1, limit: 10 })}
       />
 
+      {selected.length > 0 && (
+        <Card sx={{ mb: 2, bgcolor: 'action.hover' }}>
+          <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Typography variant="body2" fontWeight={600}>
+                {selected.length} selected
+              </Typography>
+              <Button color="error" startIcon={<DeleteIcon />} onClick={() => setBulkDeleteOpen(true)}>
+                Delete Selected
+              </Button>
+              <Button onClick={() => setSelected([])}>Clear selection</Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
       {rows.length === 0 ? (
         <EmptyState
           icon={SwapHorizIcon}
@@ -182,9 +239,17 @@ const Transactions = () => {
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      indeterminate={selected.length > 0 && selected.length < rows.length}
+                      checked={rows.length > 0 && selected.length === rows.length}
+                      onChange={toggleAll}
+                    />
+                  </TableCell>
                   <TableCell>Date</TableCell>
                   <TableCell>Type</TableCell>
-                  <TableCell>Category / Route</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Subcategory</TableCell>
                   <TableCell>Note</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Source</TableCell>
@@ -194,13 +259,17 @@ const Transactions = () => {
               </TableHead>
               <TableBody>
                 {rows.map((t) => (
-                  <TableRow key={t._id} hover>
+                  <TableRow key={t._id} hover selected={selected.includes(t._id)}>
+                    <TableCell padding="checkbox">
+                      <Checkbox checked={selected.includes(t._id)} onChange={() => toggleRow(t._id)} />
+                    </TableCell>
                     <TableCell>{formatDate(t.date)}</TableCell>
                     <TableCell>
-                      <Chip size="small" label={t.type} color={TYPE_COLOR[t.type]} variant="outlined" />
+                      <TypeCell t={t} />
                     </TableCell>
-                    <TableCell>{describeTransaction(t)}</TableCell>
-                    <TableCell sx={{ maxWidth: 220 }}>
+                    <TableCell>{t.type === 'transfer' ? describeRoute(t) : t.category?.name || '—'}</TableCell>
+                    <TableCell>{t.subcategory?.name || '—'}</TableCell>
+                    <TableCell sx={{ maxWidth: 200 }}>
                       <Typography variant="body2" noWrap>
                         {t.note || '—'}
                       </Typography>
@@ -262,23 +331,37 @@ const Transactions = () => {
               <Card key={t._id}>
                 <CardContent>
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Box>
-                      <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 0.5 }}>
-                        <Chip size="small" label={t.type} color={TYPE_COLOR[t.type]} variant="outlined" />
-                        {ALLOCATION_BADGE[t.allocationStatus] && (
-                          <Chip
-                            size="small"
-                            label={ALLOCATION_BADGE[t.allocationStatus].label}
-                            color={ALLOCATION_BADGE[t.allocationStatus].color}
-                            variant="outlined"
-                          />
-                        )}
-                      </Stack>
-                      <Typography fontWeight={600}>{describeTransaction(t)}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDate(t.date)} · {t.entrySource === 'IMPORTED' ? 'Imported' : 'Manual'}
-                      </Typography>
-                    </Box>
+                    <Stack direction="row" spacing={1} alignItems="flex-start">
+                      <Checkbox
+                        size="small"
+                        checked={selected.includes(t._id)}
+                        onChange={() => toggleRow(t._id)}
+                        sx={{ p: 0, mt: 0.25 }}
+                      />
+                      <Box>
+                        <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 0.5 }}>
+                          <TypeCell t={t} />
+                          {ALLOCATION_BADGE[t.allocationStatus] && (
+                            <Chip
+                              size="small"
+                              label={ALLOCATION_BADGE[t.allocationStatus].label}
+                              color={ALLOCATION_BADGE[t.allocationStatus].color}
+                              variant="outlined"
+                            />
+                          )}
+                        </Stack>
+                        <Typography fontWeight={600}>
+                          {t.type === 'transfer'
+                            ? describeRoute(t)
+                            : t.subcategory
+                            ? `${t.category?.name || '—'} › ${t.subcategory.name}`
+                            : t.category?.name || '—'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDate(t.date)} · {t.entrySource === 'IMPORTED' ? 'Imported' : 'Manual'}
+                        </Typography>
+                      </Box>
+                    </Stack>
                     <Typography
                       fontWeight={700}
                       color={t.type === 'income' ? 'success.main' : t.type === 'expense' ? 'error.main' : 'text.primary'}
@@ -348,6 +431,15 @@ const Transactions = () => {
         confirmLabel="Delete"
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selected.length} transaction${selected.length === 1 ? '' : 's'}?`}
+        description="This will reverse each one's effect on its related account balance. This can't be undone."
+        confirmLabel="Delete All"
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={confirmBulkDelete}
       />
 
       <ReceiptDialog

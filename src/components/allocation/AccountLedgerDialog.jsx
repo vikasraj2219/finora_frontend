@@ -33,13 +33,10 @@ const TABS = [
 ];
 
 const describeRoute = (t) => {
-  if (t.type === 'transfer') {
-    const from = t.transferFrom?.type === 'cash' ? 'Cash' : t.transferFrom?.bankAccount?.bankName || '—';
-    const to = t.transferTo?.type === 'cash' ? 'Cash' : t.transferTo?.bankAccount?.bankName || '—';
-    return `${from} → ${to}`;
-  }
-  if (!t.category) return t.note || '—';
-  return t.subcategory ? `${t.category.name} › ${t.subcategory.name}` : t.category.name;
+  if (t.type !== 'transfer') return null;
+  const from = t.transferFrom?.type === 'cash' ? 'Cash' : t.transferFrom?.bankAccount?.bankName || '—';
+  const to = t.transferTo?.type === 'cash' ? 'Cash' : t.transferTo?.bankAccount?.bankName || '—';
+  return `${from} → ${to}`;
 };
 
 // Spec sections 11–13: the drill-down ledger + stats for one bank or UPI account.
@@ -145,7 +142,8 @@ const AccountLedgerDialog = ({ open, onClose, account, accountType }) => {
                   <TableRow>
                     <TableCell>Date</TableCell>
                     <TableCell>Type</TableCell>
-                    <TableCell>Category / Route</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Subcategory</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell align="right">Amount</TableCell>
                   </TableRow>
@@ -156,8 +154,12 @@ const AccountLedgerDialog = ({ open, onClose, account, accountType }) => {
                       <TableCell>{formatDate(t.date)}</TableCell>
                       <TableCell>
                         <Chip size="small" label={t.type} variant="outlined" />
+                        {!t.typeAllocated && (
+                          <Chip size="small" label="?" variant="outlined" sx={{ ml: 0.5, minWidth: 22 }} />
+                        )}
                       </TableCell>
-                      <TableCell>{describeRoute(t)}</TableCell>
+                      <TableCell>{t.type === 'transfer' ? describeRoute(t) : t.category?.name || '—'}</TableCell>
+                      <TableCell>{t.subcategory?.name || '—'}</TableCell>
                       <TableCell>
                         {t.allocationStatus === 'UNALLOCATED' && <Chip size="small" label="🔴" variant="outlined" />}
                         {t.allocationStatus === 'PARTIALLY_ALLOCATED' && <Chip size="small" label="🟡" variant="outlined" />}

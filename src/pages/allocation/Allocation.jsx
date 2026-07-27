@@ -24,10 +24,12 @@ import {
   Grid,
 } from '@mui/material';
 import ChecklistIcon from '@mui/icons-material/ChecklistOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { useSnackbar } from 'notistack';
 
 import PageHeader from '../../components/common/PageHeader';
 import EmptyState from '../../components/common/EmptyState';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import TransactionFormDialog from '../../components/transactions/TransactionFormDialog';
 import AllocationTrendChart from '../../components/allocation/AllocationTrendChart';
 import EntrySourceChart from '../../components/allocation/EntrySourceChart';
@@ -37,6 +39,7 @@ import {
   listTransactions,
   updateTransaction,
   bulkAllocateTransactions,
+  bulkDeleteTransactions,
   getAllocationSummary,
   getAllocationTrend,
   getEntrySourceSummary,
@@ -53,20 +56,20 @@ const TABS = [
   { value: 'FULLY_ALLOCATED', label: '🟢 Fully Allocated' },
 ];
 
+const CLASSIFIABLE_TYPES = ['income', 'expense'];
+
 const describeRoute = (t) => {
-  if (t.type === 'transfer') {
-    const from = t.transferFrom?.type === 'cash' ? 'Cash' : t.transferFrom?.bankAccount?.bankName || '—';
-    const to = t.transferTo?.type === 'cash' ? 'Cash' : t.transferTo?.bankAccount?.bankName || '—';
-    return `${from} → ${to}`;
-  }
-  if (!t.category) return t.note || '—';
-  return t.subcategory ? `${t.category.name} › ${t.subcategory.name}` : t.category.name;
+  if (t.type !== 'transfer') return null;
+  const from = t.transferFrom?.type === 'cash' ? 'Cash' : t.transferFrom?.bankAccount?.bankName || '—';
+  const to = t.transferTo?.type === 'cash' ? 'Cash' : t.transferTo?.bankAccount?.bankName || '—';
+  return `${from} → ${to}`;
 };
 
 // Dedicated allocation workspace: browse by allocation status, select many transactions
 // at once, and apply one Type→Category→Subcategory assignment to all of them in a
-// single call (spec sections 16–20). Editing a single transaction reuses the normal
-// TransactionFormDialog rather than a separate screen.
+// single call (spec sections 16–20), or bulk-delete a selection outright. Editing a
+// single transaction reuses the normal TransactionFormDialog rather than a separate
+// screen.
 const Allocation = () => {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -83,10 +86,12 @@ const Allocation = () => {
   const [bankAccounts, setBankAccounts] = useState([]);
   const [upiAccounts, setUpiAccounts] = useState([]);
 
+  const [bulkType, setBulkType] = useState('');
   const [bulkCategory, setBulkCategory] = useState('');
   const [bulkSubcategory, setBulkSubcategory] = useState('');
   const [bulkSubcategories, setBulkSubcategories] = useState([]);
   const [applying, setApplying] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const [editing, setEditing] = useState(null);
 
@@ -129,15 +134,20 @@ const Allocation = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, page]);
 
+  // Picking a category implies its type — keep the Type field in sync so the request
+  // sent is never contradictory (backend rejects a mismatched pair anyway).
   useEffect(() => {
     setBulkSubcategory('');
     if (!bulkCategory) {
       setBulkSubcategories([]);
       return;
     }
+    const cat = categories.find((c) => c._id === bulkCategory);
+    if (cat) setBulkType(cat.type);
     listSubcategories({ category: bulkCategory })
       .then(({ data }) => setBulkSubcategories(data.data))
       .catch(() => setBulkSubcategories([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bulkCategory]);
 
   const toggleRow = (id) => {
@@ -149,29 +159,50 @@ const Allocation = () => {
     setSelected((prev) => (prev.length === ids.length ? [] : ids));
   };
 
+  const refreshAll = () => {
+    loadRows();
+    loadSummary();
+    loadDashboardCharts();
+  };
+
   const applyBulk = async () => {
-    if (!bulkCategory || selected.length === 0) return;
+    if ((!bulkType && !bulkCategory) || selected.length === 0) return;
     setApplying(true);
     try {
       const { data } = await bulkAllocateTransactions({
         transactionIds: selected,
-        category: bulkCategory,
+        type: bulkCategory ? undefined : bulkType || undefined,
+        category: bulkCategory || undefined,
         subcategory: bulkSubcategory || undefined,
       });
       const { updated, skippedCount } = data.data;
       enqueueSnackbar(
-        `${updated} transaction${updated === 1 ? '' : 's'} allocated${skippedCount ? `, ${skippedCount} skipped (type mismatch)` : ''}`,
+        `${updated} transaction${updated === 1 ? '' : 's'} allocated${skippedCount ? `, ${skippedCount} skipped` : ''}`,
         { variant: skippedCount ? 'warning' : 'success' }
       );
+      setBulkType('');
       setBulkCategory('');
       setBulkSubcategory('');
-      loadRows();
-      loadSummary();
-      loadDashboardCharts();
+      refreshAll();
     } catch (err) {
       enqueueSnackbar(err.response?.data?.message || 'Bulk allocation failed', { variant: 'error' });
     } finally {
       setApplying(false);
+    }
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      const { data } = await bulkDeleteTransactions(selected);
+      const { deleted, skippedCount } = data.data;
+      enqueueSnackbar(
+        `${deleted} transaction${deleted === 1 ? '' : 's'} deleted${skippedCount ? `, ${skippedCount} skipped` : ''}`,
+        { variant: skippedCount ? 'warning' : 'success' }
+      );
+      setBulkDeleteOpen(false);
+      refreshAll();
+    } catch (err) {
+      enqueueSnackbar(err.response?.data?.message || 'Bulk delete failed', { variant: 'error' });
     }
   };
 
@@ -180,9 +211,7 @@ const Allocation = () => {
       await updateTransaction(editing._id, payload);
       enqueueSnackbar('Transaction updated', { variant: 'success' });
       setEditing(null);
-      loadRows();
-      loadSummary();
-      loadDashboardCharts();
+      refreshAll();
     } catch (err) {
       enqueueSnackbar(err.response?.data?.message || 'Save failed', { variant: 'error' });
     }
@@ -235,10 +264,30 @@ const Allocation = () => {
       {selected.length > 0 && (
         <Card sx={{ mb: 2, bgcolor: 'action.hover' }}>
           <CardContent>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} flexWrap="wrap">
               <Typography variant="body2" fontWeight={600}>
                 {selected.length} selected
               </Typography>
+              <TextField
+                select
+                size="small"
+                label="Type"
+                value={bulkType}
+                onChange={(e) => {
+                  setBulkType(e.target.value);
+                  setBulkCategory('');
+                }}
+                sx={{ minWidth: 150 }}
+              >
+                <MenuItem value="">
+                  <em>Not set</em>
+                </MenuItem>
+                {CLASSIFIABLE_TYPES.map((t) => (
+                  <MenuItem key={t} value={t}>
+                    {t}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
                 select
                 size="small"
@@ -247,11 +296,16 @@ const Allocation = () => {
                 onChange={(e) => setBulkCategory(e.target.value)}
                 sx={{ minWidth: 220 }}
               >
-                {categories.map((c) => (
-                  <MenuItem key={c._id} value={c._id}>
-                    {c.name} ({c.type})
-                  </MenuItem>
-                ))}
+                <MenuItem value="">
+                  <em>Not set</em>
+                </MenuItem>
+                {categories
+                  .filter((c) => !bulkType || c.type === bulkType)
+                  .map((c) => (
+                    <MenuItem key={c._id} value={c._id}>
+                      {c.name} ({c.type})
+                    </MenuItem>
+                  ))}
               </TextField>
               <TextField
                 select
@@ -271,13 +325,17 @@ const Allocation = () => {
                   </MenuItem>
                 ))}
               </TextField>
-              <Button variant="contained" disabled={!bulkCategory || applying} onClick={applyBulk}>
+              <Button variant="contained" disabled={(!bulkType && !bulkCategory) || applying} onClick={applyBulk}>
                 {applying ? 'Applying…' : 'Apply Allocation'}
+              </Button>
+              <Button color="error" startIcon={<DeleteIcon />} onClick={() => setBulkDeleteOpen(true)}>
+                Delete Selected
               </Button>
               <Button onClick={() => setSelected([])}>Clear selection</Button>
             </Stack>
             <Typography variant="caption" color="text.secondary">
-              Only selected transactions matching the category's income/expense type will be updated — others are skipped and reported.
+              Picking a category sets its type automatically. Transfers/adjustments/opening balances in the
+              selection are skipped — they aren't classifiable.
             </Typography>
           </CardContent>
         </Card>
@@ -300,7 +358,8 @@ const Allocation = () => {
                   </TableCell>
                   <TableCell>Date</TableCell>
                   <TableCell>Type</TableCell>
-                  <TableCell>Category / Route</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Subcategory</TableCell>
                   <TableCell>Source</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="right">Amount</TableCell>
@@ -320,9 +379,15 @@ const Allocation = () => {
                     </TableCell>
                     <TableCell>{formatDate(t.date)}</TableCell>
                     <TableCell>
-                      <Chip size="small" label={t.type} variant="outlined" />
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Chip size="small" label={t.type} variant="outlined" />
+                        {!t.typeAllocated && (
+                          <Chip size="small" label="?" variant="outlined" sx={{ minWidth: 22 }} />
+                        )}
+                      </Stack>
                     </TableCell>
-                    <TableCell>{describeRoute(t)}</TableCell>
+                    <TableCell>{t.type === 'transfer' ? describeRoute(t) : t.category?.name || '—'}</TableCell>
+                    <TableCell>{t.subcategory?.name || '—'}</TableCell>
                     <TableCell>
                       <Chip size="small" label={t.entrySource === 'IMPORTED' ? 'Imported' : 'Manual'} variant="outlined" />
                     </TableCell>
@@ -369,6 +434,15 @@ const Allocation = () => {
         upiAccounts={upiAccounts}
         onClose={() => setEditing(null)}
         onSubmit={saveEdit}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selected.length} transaction${selected.length === 1 ? '' : 's'}?`}
+        description="This will reverse each one's effect on its related account balance. This can't be undone."
+        confirmLabel="Delete All"
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={confirmBulkDelete}
       />
     </Box>
   );
